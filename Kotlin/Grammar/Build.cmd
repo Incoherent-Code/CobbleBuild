@@ -1,0 +1,1 @@
+antlr4 -listener -visitor -o ..\Parser\ -package CobbleBuild.Kotlin -Dlanguage=CSharp .\KotlinLexer.g4 .\KotlinParser.g4

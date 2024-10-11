@@ -1,0 +1,5 @@
+Things I need Mojang to add:
+--Dimension.SpawnEntity() should allow specifying a certain spawn event among other things
+--Better Documentation
+--More GUI stuff (BRING BACK ORE UI)
+--JS api should be able to set the target of an entity.

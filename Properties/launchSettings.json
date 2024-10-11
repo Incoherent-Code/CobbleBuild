@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CobbleBuild": {
+      "commandName": "Project",
+      "workingDirectory": "C:\\Users\\aiaub\\Documents\\VSCode\\Cobblemon TS"
+    }
+  }
+}

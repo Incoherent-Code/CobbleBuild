@@ -1,0 +1,38 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.cobblemon.quadruped_walk": {
+      "loop": true,
+      "bones": {
+        "hindRightLeg": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 57.3 * v.periodMultiplier) * v.amplitudeMultiplier * 57.3 * q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "hindLeftLeg": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 57.3 * v.periodMultiplier + 180) *  v.amplitudeMultiplier * 57.3 * q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "foreRightLeg": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 57.3 * v.periodMultiplier + 180) * v.amplitudeMultiplier * 57.3 * q.modified_move_speed",
+            0,
+            0
+          ]
+        },
+        "foreLeftLeg": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 57.3 * v.periodMultiplier) * v.amplitudeMultiplier * 57.3 * q.modified_move_speed",
+            0,
+            0
+          ]
+        }
+      }
+    }
+  }
+}

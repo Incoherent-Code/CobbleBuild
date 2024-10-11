@@ -1,0 +1,28 @@
+//Technicall BimanualSwingAnimation has idle movement but all uses of this animation are not idle
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.cobblemon.bimanual_swing": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            //Pitch
+            0,
+            //Yaw
+            "math.cos(query.modified_distance_moved * 57.3 * v.periodMultiplier) * v.amplitudeMultiplier * 57.3 * q.modified_move_speed",
+            //Roll
+            0
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            0,
+            "math.cos(query.modified_distance_moved * 57.3 * v.periodMultiplier) *  v.amplitudeMultiplier * 57.3 * q.modified_move_speed",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

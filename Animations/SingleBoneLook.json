@@ -1,0 +1,16 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.common.look_at_target": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "relative_to": {
+            "rotation": "entity"
+          },
+          "rotation": [ "math.clamp(query.target_x_rotation - this, -45, 70)", "math.clamp(query.target_y_rotation - this, -45, 45)", 0.0 ]
+        }
+      }
+    }
+  }
+}

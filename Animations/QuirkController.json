@@ -1,0 +1,27 @@
+/* Quirk Controller for cobblemon
+*/
+{
+  "format_version": "1.10.0",
+  "animation_controllers": {
+    "controller.animation.cobblemon.quirk": {
+      "initial_state": "init",
+      "states": {
+        "init": {
+          "transitions": [
+            { "quirk_inactive": "v.next_quirk_time = q.life_time + math.random(v.min_quirk_time, v.max_quirk_time); return true;" }
+          ]
+        },
+        "quirk_inactive": {
+          "transitions": [
+            { "quirk_active": "v.quirk_end_time = q.life_time + 1; return (q.life_time > v.next_quirk_time) && (v.condition);" }
+          ]
+        },
+        "quirk_active": {
+          "transitions": [
+            { "quirk_inactive": "v.next_quirk_time = q.life_time + math.random(v.min_quirk_time, v.max_quirk_time); return q.all_animations_finished && (q.life_time > (v.quirk_end_time ?? 1));" }
+          ]
+        }
+      }
+    }
+  }
+}
