@@ -51,10 +51,10 @@ namespace CobbleBuild {
          if (!Directory.Exists(config.resourcePath)) {
             error($"Path {config.resourcePath} (Output Directory) does not exist!");
          }
-         if (!Directory.Exists(config.minecraftPath)) {
-            if (File.Exists(config.minecraftPath) && config.minecraftPath.EndsWith(".jar")) {
+         if (!Directory.Exists(config.minecraftJavaPath)) {
+            if (File.Exists(config.minecraftJavaPath) && config.minecraftJavaPath.EndsWith(".jar")) {
                Console.WriteLine("Extracting Minecraft...");
-               config.minecraftPath = ExtractZipFile(config.minecraftPath);
+               config.minecraftJavaPath = ExtractZipFile(config.minecraftJavaPath);
 
                if (!config.temporairlyExtract)
                   config.overwriteConfig();

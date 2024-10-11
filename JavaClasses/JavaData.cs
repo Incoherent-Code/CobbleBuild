@@ -71,7 +71,7 @@ namespace CobbleBuild.JavaClasses {
       /// Loads all of the Data from Java Minecraft and pertinent info from cobblemon using the config paths
       /// </summary>
       public static void populateData() {
-         loadMinecraftData(Path.Combine(Config.config.minecraftPath, "data", "minecraft"));
+         loadMinecraftData(Path.Combine(Config.config.minecraftJavaPath, "data", "minecraft"));
          loadMinecraftData(Path.Combine(Config.config.resourcesPath, "data", "minecraft"));
          loadCobblemonData(Path.Combine(Config.config.resourcesPath, "data", "cobblemon"));
          deconstructItemTags(ref JavaData.minecraftData!.itemTags);

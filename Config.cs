@@ -27,12 +27,15 @@ namespace CobbleBuild {
       /// </summary>
       public string projectPath = "%userprofile%/Documents/VSCode/Cobblemon TS";
       /// <summary>
-      /// Path to target version of minecraft
+      /// Path to target version of minecraft java
       /// </summary>
-      public string minecraftPath = "%appdata%/.minecraft/versions/1.20.1/1.20.1.jar";
+      public string minecraftJavaPath = "%appdata%/.minecraft/versions/1.20.1/1.20.1.jar";
+      //These are only used by gulp
+      public string minecraftPath = "%localappdata%/Packages/Microsoft.MinecraftUWP_8wekyb3d8bbwe/LocalState/games/com.mojang/";
+      public string minecraftPreviewPath = "%localappdata%/Packages/Microsoft.MinecraftWindowsBeta_8wekyb3d8bbwe/LocalState/games/com.mojang/";
+      public bool useMinecraftPreview { get; set; } = false;
       public string BPName { get; set; } = "CobblemonBedrock";
       public string RPName { get; set; } = "CobblemonBedrock";
-      public bool useMinecraftPreview { get; set; } = false;
       public bool usePowershell { get; set; } = false;
       public bool minify { get; set; } = false;
       public bool temporairlyExtract { get; set; } = true;
@@ -102,7 +105,7 @@ namespace CobbleBuild {
          //Resolve the env variables in the input paths
          handleEnvVariables(ref config.projectPath);
          handleEnvVariables(ref config.cobblemonPath);
-         handleEnvVariables(ref config.minecraftPath);
+         handleEnvVariables(ref config.minecraftJavaPath);
 
          config.behaviorPath = Path.Combine(config.projectPath, "behavior_packs", config.BPName);
          config.resourcePath = Path.Combine(config.projectPath, "resource_packs", config.RPName);
@@ -159,7 +162,7 @@ namespace CobbleBuild {
                i++;
             }
             else if (arg == "-g") {
-               config.minecraftPath = args[i + 1];
+               config.minecraftJavaPath = args[i + 1];
                i++;
             }
             else if (arg == "-m") {
