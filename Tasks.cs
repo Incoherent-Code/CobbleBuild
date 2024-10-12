@@ -71,19 +71,17 @@ namespace CobbleBuild {
          sucessCounter++;
          pokemon.passedWithoutErrors = true;
       }
-      public static void ImportPokeball(string file, AnimationJson pokeballAnimations) {
-         PokeballResourceData variation = LoadFromJson<PokeballResourceData>(file);
+      public static async Task ImportPokeball(string file, AnimationJson pokeballAnimations) {
+         PokeballResourceData variation = await LoadFromJsonAsync<PokeballResourceData>(file);
          string identifier = variation.pokeball;
          string name = identifier.Split(":")[1];
 
          //Create Server Entity
          ServerEntityJson serverEntity = ServerEntityCreator.Create(variation);
-         SaveToJson(serverEntity, Path.Combine(config.behaviorPath, @$"entities\pokeballs\{name}.json"));
+         await SaveToJsonAsync(serverEntity, Path.Combine(config.behaviorPath, @$"entities\pokeballs\{name}.json"));
 
          //Copy Texture
-         File.Copy(Path.Combine(config.resourcesPath, @$"assets\cobblemon\textures\poke_balls\{name}.png"), Path.Combine(config.resourcePath, @$"textures\pokeballs\{name}.png"), true);
-         //File.Copy(Path.Combine(config.resourcesPath, @$"assets\cobblemon\textures\item\poke_balls\{name}.png"), Path.Combine(config.resourcePath, @$"textures\pokeballitems\{name}.png"), true);
-         //itemAtlasJson.texture_data.TryAdd(name, new Atlas(new objectOrObjectArray(@"textures/pokeballitems/" + name)));
+         await Misc.CopyAsync(Path.Combine(config.resourcesPath, @$"assets\cobblemon\textures\poke_balls\{name}.png"), Path.Combine(config.resourcePath, @$"textures\pokeballs\{name}.png"));
 
          //Loot Tables
          LootTable loot = new LootTable() {
@@ -91,22 +89,21 @@ namespace CobbleBuild {
             rolls = 1
          };
          loot.entries.Add(new LootTable.LootTableEntry(identifier, 100));
-         SaveToJson(new LootTableJson(loot), Path.Combine(config.behaviorPath, "loot_tables/pokeballs", name + ".json"));
+         await SaveToJsonAsync(new LootTableJson(loot), Path.Combine(config.behaviorPath, "loot_tables/pokeballs", name + ".json"));
 
          //Create Client Entity
          ClientEntityJson clientEntity = ClientEntityCreator.Create(variation, pokeballAnimations);
-         SaveToJson(clientEntity, Path.Combine(config.resourcePath, @$"entity/pokeballs/{name}.json"));
+         await SaveToJsonAsync(clientEntity, Path.Combine(config.resourcePath, @$"entity/pokeballs/{name}.json"));
 
          //Creates Item Json
          ItemJson item = ItemCreator.Create(variation);
-         SaveToJson(item, Path.Combine(config.behaviorPath, @$"items\pokeballs\{name}.json"));
+         await SaveToJsonAsync(item, Path.Combine(config.behaviorPath, @$"items\pokeballs\{name}.json"));
 
          //Creates Dummy Pokeball for display on healing machine
-         SaveToJson(ServerEntityCreator.CreatePokeballDummy(variation), Path.Combine(config.behaviorPath, "entities/pokeballs/", name + "_dummy.json"));
-         SaveToJson(ClientEntityCreator.CreatePokeballDummy(variation, pokeballAnimations), Path.Combine(config.resourcePath, "entity/pokeballs/", name + "_dummy.json"));
+         await SaveToJsonAsync(ServerEntityCreator.CreatePokeballDummy(variation), Path.Combine(config.behaviorPath, "entities/pokeballs/", name + "_dummy.json"));
+         await SaveToJsonAsync(ClientEntityCreator.CreatePokeballDummy(variation, pokeballAnimations), Path.Combine(config.resourcePath, "entity/pokeballs/", name + "_dummy.json"));
       }
-      public static void createApricorn(string apricornName) {
-         //Console.WriteLine($"Importing {apricornName}...");
+      public static async Task createApricorn(string apricornName) {
          int percentToGetSeed = 10;
          //Imports blocks using premade black apricorn block as template
          if (apricornName != "black_apricorn") {
@@ -121,10 +118,10 @@ namespace CobbleBuild {
          //Creates Placers
          ItemJson saplingPlacer;
          ItemJson apricorn = ItemCreator.Create(apricornName, out saplingPlacer);
-         SaveToJson(apricorn, Path.Combine(config.behaviorPath, $"items/apricorns/{apricornName}.json"));
-         Import.ImportTexture(Path.Combine(config.resourcesPath, $"assets/cobblemon/textures/item/{apricornName}.png"), Path.Combine(config.resourcePath, $"textures/item/{apricornName}.png"), Import.TextureType.Item);
-         SaveToJson(saplingPlacer, Path.Combine(config.behaviorPath, $"items/apricorns/{apricornName}_seed.json"));
-         Import.ImportTexture(Path.Combine(config.resourcesPath, $"assets/cobblemon/textures/item/{apricornName}_seed.png"), Path.Combine(config.resourcePath, $"textures/item/{apricornName}_seed.png"), Import.TextureType.Item);
+         await SaveToJsonAsync(apricorn, Path.Combine(config.behaviorPath, $"items/apricorns/{apricornName}.json"));
+         await Import.ImportTexture(Path.Combine(config.resourcesPath, $"assets/cobblemon/textures/item/{apricornName}.png"), Path.Combine(config.resourcePath, $"textures/item/{apricornName}.png"), Import.TextureType.Item);
+         await SaveToJsonAsync(saplingPlacer, Path.Combine(config.behaviorPath, $"items/apricorns/{apricornName}_seed.json"));
+         await Import.ImportTexture(Path.Combine(config.resourcesPath, $"assets/cobblemon/textures/item/{apricornName}_seed.png"), Path.Combine(config.resourcePath, $"textures/item/{apricornName}_seed.png"), Import.TextureType.Item);
 
          //Loot Tables
          LootTable apricotAdultLoot = new LootTable() {
@@ -143,24 +140,24 @@ namespace CobbleBuild {
             rolls = 1
          };
          saplingLoot.entries.Add(new LootTable.LootTableEntry($"cobblemon:{apricornName}_sapling", 100));
-         SaveToJson(new LootTableJson(apricotAdultLoot, apricotAdultLoot2), Path.Combine(config.behaviorPath, $"loot_tables/blocks/apricorns/{apricornName}.json"));
-         SaveToJson(new LootTableJson(saplingLoot), Path.Combine(config.behaviorPath, $"loot_tables/blocks/apricorns/{apricornName}_sapling.json"));
+         await SaveToJsonAsync(new LootTableJson(apricotAdultLoot, apricotAdultLoot2), Path.Combine(config.behaviorPath, $"loot_tables/blocks/apricorns/{apricornName}.json"));
+         await SaveToJsonAsync(new LootTableJson(saplingLoot), Path.Combine(config.behaviorPath, $"loot_tables/blocks/apricorns/{apricornName}_sapling.json"));
       }
-      public static void CreateBerry(string pathToFile) {
+      public static async Task CreateBerry(string pathToFile) {
          if (!File.Exists(pathToFile)) {
             throw new ArgumentException("File Path Provided did not get a valid file");
          }
-         var berryData = JsonConvert.DeserializeObject<Berry>(File.ReadAllText(pathToFile));
+         var berryData = await LoadFromJsonAsync<Berry>(pathToFile);
          var berryName = Path.GetFileNameWithoutExtension(pathToFile);
          var texturePath = Path.Combine(config.resourcesPath, "assets/cobblemon/textures/item/berries", $"{berryName}.png");
          //Import.ImportTexture(texturePath, Path.Combine(config.resourcePath, getPathFrom(texturePath, "textures")), Import.TextureType.Item);
          ItemJson item = ItemCreator.CreateBerry(berryName, berryData);
-         SaveToJson(item, Path.Combine(config.behaviorPath, $"items/berries/{berryName}.json"));
+         await SaveToJsonAsync(item, Path.Combine(config.behaviorPath, $"items/berries/{berryName}.json"));
       }
-      public static void CreateGemericItemFromTexture(string texturePath) {
+      public static async Task CreateGemericItemFromTexture(string texturePath) {
          string itemName = Path.GetFileNameWithoutExtension(texturePath);
          ItemJson item = ItemCreator.CreateGeneric(itemName);
-         SaveToJson(item, Path.Combine(config.behaviorPath, $"items/generic/{itemName}.json"));
+         await SaveToJsonAsync(item, Path.Combine(config.behaviorPath, $"items/generic/{itemName}.json"));
       }
    }
 }

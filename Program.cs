@@ -213,7 +213,7 @@ namespace CobbleBuild {
             foreach (var pokemon in targetPokemon) {
                pokemonTasks.Add(Tasks.ImportPokemon(pokemon));
             }
-            printExceptionsToConsole(async () => await Task.WhenAll(pokemonTasks));
+            printExceptionsToConsole(() => Task.WaitAll([.. pokemonTasks]));
             pokemonStopWatch.Stop();
             var pokemonCreateTime = pokemonStopWatch.ElapsedMilliseconds;
 
@@ -225,38 +225,38 @@ namespace CobbleBuild {
 
             //Generic Pokeball Animation
             string pokeballAnimationData = File.ReadAllText(Path.Combine(config.resourcesPath, @"assets\cobblemon\bedrock\poke_balls\animations\poke_ball.animation.json"));
-            AnimationJson pokeballAnimations = JsonConvert.DeserializeObject<AnimationJson>(pokeballAnimationData);
+            AnimationJson pokeballAnimations = JsonConvert.DeserializeObject<AnimationJson>(pokeballAnimationData)!;
             await File.WriteAllTextAsync(Path.Combine(config.resourcePath, @"animations\pokeballs\pokeball.animation.json"), JsonConvert.SerializeObject(pokeballAnimations, config.SerializerSettings));
 
             //Read each pokeball variation
-            var pokeballTask = new ActionGroup(config.multithreaded ? ActionGroupType.Async : ActionGroupType.Sync);
+            var pokeballTasks = new List<Task>();
             string[] ballDirs = Directory.GetFiles(Path.Combine(config.resourcesPath, @"assets\cobblemon\bedrock\poke_balls\variations\"));
             foreach (string file in ballDirs) {
-               pokeballTask.AddOrRun(() => printExceptionsToConsole(() => Tasks.ImportPokeball(file, pokeballAnimations)));
+               pokeballTasks.Add(Tasks.ImportPokeball(file, pokeballAnimations));
             }
-            pokeballTask.ExecuteAll();
+            printExceptionsToConsole(() => Task.WaitAll([.. pokemonTasks]));
 
-            //Imports all Apricorns using textures (best method we have without parsing kotlin code (Uses Black Apricorn block and sappling as template)
+            //Imports all Apricorns using textures (best method we have without parsing kotlin code) (Uses Black Apricorn block and sappling as template)
             Console.WriteLine("Importing Apricorns...");
-            var apricornTasks = new ActionGroup(config.multithreaded ? ActionGroupType.Async : ActionGroupType.Sync);
+            var apricornTasks = new List<Task>();
             foreach (string file in Directory.GetFiles(Path.Combine(config.resourcesPath, "assets/cobblemon/textures/item/"))) {
                if (!file.EndsWith("apricorn.png")) {
                   continue;
                }
                string apricornName = Path.GetFileNameWithoutExtension(file);
-               apricornTasks.AddOrRun(() => printExceptionsToConsole(() => Tasks.createApricorn(apricornName)));
+               apricornTasks.Add(Tasks.createApricorn(apricornName));
             }
-            apricornTasks.ExecuteAll();
+            printExceptionsToConsole(() => Task.WaitAll([.. apricornTasks]));
 
 
             //Read each pokeball variation
             Console.WriteLine("Importing Berries...");
-            var berryTask = new ActionGroup(config.multithreaded ? ActionGroupType.Async : ActionGroupType.Sync);
+            var berryTasks = new List<Task>();
             string[] berryDirs = Directory.GetFiles(Path.Combine(config.resourcesPath, @"data/cobblemon/berries"));
             foreach (string file in berryDirs) {
-               berryTask.AddOrRun(() => printExceptionsToConsole(() => Tasks.CreateBerry(file)));
+               berryTasks.Add(Tasks.CreateBerry(file));
             }
-            berryTask.ExecuteAll();
+            printExceptionsToConsole(() => Task.WaitAll([.. berryTasks]));
 
             Console.WriteLine("Importing Other Resources...");
             await Import.ImportAllTexturesFromFolder(Path.Combine(config.resourcesPath, "assets/cobblemon/textures/block"), Path.Combine(config.resourcePath, "textures/block"), Import.TextureType.Block);
@@ -276,14 +276,14 @@ namespace CobbleBuild {
             foreach (string file in getAllFilesInDirandSubDirs(Path.Combine(config.behaviorPath, "items"), Path.Combine(config.behaviorPath, "items/generic"))) {
                existingItems.Add(Path.GetFileNameWithoutExtension(file));
             }
-            //List<Task> genericItemTasks = new List<Task>();
+            List<Task> genericItemTasks = new List<Task>();
             foreach (string file in getAllFilesInDirandSubDirs(Path.Combine(config.resourcesPath, "assets/cobblemon/textures/item"), Path.Combine(config.resourcesPath, "assets/cobblemon/textures/item\\advancements"))) {
                if (!existingItems.Contains(Path.GetFileNameWithoutExtension(file))) {
                   //genericItemTasks.Add(Tasks.CreateGemericItemFromTexture(file));
-                  Tasks.CreateGemericItemFromTexture(file);
+                  genericItemTasks.Add(Tasks.CreateGemericItemFromTexture(file));
                }
             }
-            //Task.WaitAll([.. genericItemTasks]);
+            printExceptionsToConsole(() => Task.WaitAll([.. genericItemTasks]));
 
 
             Console.WriteLine("Finishing up...");
