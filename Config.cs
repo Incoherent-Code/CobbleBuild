@@ -25,7 +25,8 @@ namespace CobbleBuild {
       /// <summary>
       /// Path to cobblemon bedrock source
       /// </summary>
-      public string projectPath = "%userprofile%/Documents/VSCode/Cobblemon TS";
+      [JsonIgnore]
+      public string projectPath = Directory.GetCurrentDirectory(); //"%userprofile%/Documents/VSCode/Cobblemon TS";
       /// <summary>
       /// Path to target version of minecraft java
       /// </summary>
@@ -39,6 +40,8 @@ namespace CobbleBuild {
       public bool usePowershell { get; set; } = false;
       public bool minify { get; set; } = false;
       public bool temporairlyExtract { get; set; } = true;
+      [JsonIgnore]
+      [Obsolete]
       public bool multithreaded { get; set; } = true;
       public string gulpArgs { get; set; } = "";
       public bool cachePosers { get; set; } = true;
@@ -50,12 +53,12 @@ namespace CobbleBuild {
       /// Path of the target behavior pack
       /// </summary>
       [JsonIgnore]
-      public string behaviorPath { get; set; }
+      public string behaviorPath { get { return Path.Combine(projectPath, "behavior_packs", config.BPName); } }
       /// <summary>
       /// Path of the target resource pack
       /// </summary>
       [JsonIgnore]
-      public string resourcePath { get; set; }
+      public string resourcePath { get { return Path.Combine(projectPath, "resource_packs", config.RPName); } }
       /// <summary>
       /// Configured Default serializer settings
       /// </summary>
@@ -65,12 +68,12 @@ namespace CobbleBuild {
       /// Path to cobblemon resources (/common/src/main/resources)
       /// </summary>
       [JsonIgnore]
-      public string resourcesPath { get; set; }
+      public string resourcesPath { get { return Path.Combine(cobblemonPath, "common", "src", "main", "resources"); } }
       /// <summary>
       /// Path to base kotlin code (/common/src/main/kotlin/com/cobblemon/mod/common)
       /// </summary>
       [JsonIgnore]
-      public string kotlinBasePath { get; set; }
+      public string kotlinBasePath { get { return Path.Combine(config.cobblemonPath, "common/src/main/kotlin/com/cobblemon/mod/common"); } }
 
       //Tasks to complete
       [JsonIgnore]
@@ -90,8 +93,9 @@ namespace CobbleBuild {
          File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), "cbconfig.json"), JsonConvert.SerializeObject(this, Formatting.Indented));
       }
 
-      private static void handleEnvVariables(ref string path) {
+      public static string handleEnvVariables(ref string path) {
          path = Environment.ExpandEnvironmentVariables(path);
+         return path;
       }
 
       /// <summary>
@@ -107,10 +111,6 @@ namespace CobbleBuild {
          handleEnvVariables(ref config.cobblemonPath);
          handleEnvVariables(ref config.minecraftJavaPath);
 
-         config.behaviorPath = Path.Combine(config.projectPath, "behavior_packs", config.BPName);
-         config.resourcePath = Path.Combine(config.projectPath, "resource_packs", config.RPName);
-         config.resourcesPath = Path.Combine(config.cobblemonPath, "common", "src", "main", "resources");
-         config.kotlinBasePath = Path.Combine(config.cobblemonPath, "common/src/main/kotlin/com/cobblemon/mod/common");
          if (config.minify) {
             config.SerializerSettings = new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore, Formatting = Formatting.None, ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
          }
@@ -145,11 +145,7 @@ namespace CobbleBuild {
          //Testing of these paths are handled in the main void
          for (int i = 0; i < args.Length; i++) {
             string arg = args[i].ToLower();
-            if (arg == "-i") {
-               config.resourcesPath = args[i + 1];
-               i++;
-            }
-            else if (arg == "-p") {
+            if (arg == "-p") {
                config.projectPath = args[i + 1];
                i++;
             }

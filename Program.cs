@@ -38,23 +38,31 @@ namespace CobbleBuild {
          Console.WriteLine("CobbleBuild - Cobblemon Port Tool for Minecraft Bedrock Edition");
 
          init(args);
-         //Tests if Directories Exist
+         //Tests if the required Directories exist.
+         if (!Directory.Exists(config.projectPath) || !Directory.Exists(config.behaviorPath) || !Directory.Exists(config.resourcePath)) {
+            error($"Be sure to run CobbleBuild in the root of the cobblemon-bedrock source code.");
+         }
          if (!Directory.Exists(config.resourcesPath)) {
-            error($"Path {config.resourcesPath} (Cobblemon Resource Path) does not exist!");
-         }
-         if (!Directory.Exists(config.projectPath)) {
-            error($"Path {config.projectPath} (Project Folder) does not exist!");
-         }
-         if (!Directory.Exists(config.behaviorPath)) {
-            error($"Path {config.behaviorPath} (Output Directory) does not exist!");
-         }
-         if (!Directory.Exists(config.resourcePath)) {
-            error($"Path {config.resourcePath} (Output Directory) does not exist!");
+            var resoursesPath = Path.Combine(config.projectPath, "extractedResources", "cobblemon-src");
+            Console.WriteLine("Downloading Cobblemon Source...");
+            Directory.CreateDirectory(resoursesPath);
+            RunCmd("git", "clone https://gitlab.com/cable-mc/cobblemon.git --branch v1.4.1 --single-branch ./", resoursesPath);
+            config.cobblemonPath = resoursesPath;
+
+            if (!config.temporairlyExtract)
+               config.overwriteConfig();
+            else
+               temporaryFolders.Add(resoursesPath);
          }
          if (!Directory.Exists(config.minecraftJavaPath)) {
-            if (File.Exists(config.minecraftJavaPath) && config.minecraftJavaPath.EndsWith(".jar")) {
+            //Default folder path
+            string mcJarPath = handleEnvVariables(ref new Config().minecraftJavaPath);
+            if (File.Exists(config.minecraftJavaPath) && config.minecraftJavaPath.EndsWith(".jar"))
+               mcJarPath = config.minecraftJavaPath;
+
+            if (File.Exists(mcJarPath) && mcJarPath.EndsWith(".jar")) {
                Console.WriteLine("Extracting Minecraft...");
-               config.minecraftJavaPath = ExtractZipFile(config.minecraftJavaPath);
+               config.minecraftJavaPath = ExtractZipFile(mcJarPath);
 
                if (!config.temporairlyExtract)
                   config.overwriteConfig();
@@ -100,7 +108,7 @@ namespace CobbleBuild {
             SaveToJson(validLanguages, Path.Combine(config.resourcePath, "texts/languages.json"));
          }
 
-         if (config.buildTasks.Contains("translatePosers")) {
+         if (config.buildTasks.Contains("posers")) {
             PoserRegistry.InitMappings();
             string cachePath = Path.Combine(config.projectPath, "poserCache");
             if (config.cachePosers && !Directory.Exists(cachePath))

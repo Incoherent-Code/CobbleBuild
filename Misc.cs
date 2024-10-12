@@ -139,7 +139,9 @@ namespace CobbleBuild {
             }
          }
       }
-
+      /// <summary>
+      /// Prints the message to console and terminates the process.
+      /// </summary>
       public static void error(string msg) {
          Debug.WriteLine(msg);
          Console.ForegroundColor = ConsoleColor.Red;
@@ -147,12 +149,19 @@ namespace CobbleBuild {
          Console.ForegroundColor = ConsoleColor.White;
          Environment.Exit(1);
       }
+      /// <summary>
+      /// Prints the message to the consol in red, but does not terminate the process.
+      /// </summary>
+      /// <param name="msg"></param>
       public static void softError(string msg) {
          Debug.WriteLine(msg);
          Console.ForegroundColor = ConsoleColor.Red;
          Console.WriteLine(msg);
          Console.ForegroundColor = ConsoleColor.White;
       }
+      /// <summary>
+      /// Prints message to console in yellow.
+      /// </summary>
       public static void warn(string msg) {
          Debug.WriteLine(msg);
          Console.ForegroundColor = ConsoleColor.Yellow;
@@ -172,7 +181,7 @@ namespace CobbleBuild {
       /// Extracts a file to a directory. Adds file to temporaryFolders list if config.temporairlyExtract is true.
       /// </summary>
       /// <param name="filePath">Path to the file to be extracted.</param>
-      /// <param name="outputPath">Optional output path. If null, the path will be inherited from the file name</param>
+      /// <param name="outputPath">Optional output path. If null, it will extract to the extractedResources folder</param>
       /// <returns>The path that the files were extracted to.</returns>
       /// <exception cref="FileNotFoundException"> Thrown when file specified in filePath doesnt exist.</exception>
       public static string ExtractZipFile(string filePath, string? outputPath = null) {
@@ -180,7 +189,7 @@ namespace CobbleBuild {
             throw new FileNotFoundException($"File {filePath} could not be found.");
 
          if (outputPath == null)
-            outputPath = Path.Combine(Path.GetDirectoryName(filePath), Path.GetFileNameWithoutExtension(filePath));
+            outputPath = Path.Combine(Config.config.projectPath, "extractedResources", Path.GetFileNameWithoutExtension(filePath));
 
          Directory.CreateDirectory(outputPath);
          System.IO.Compression.ZipFile.ExtractToDirectory(filePath, outputPath, true);
@@ -228,7 +237,7 @@ namespace CobbleBuild {
             }
          }
       }
-      public static void RunCmd(string FileName, string arguments, string workingDirectory) {
+      public static void RunCmd(string FileName, string arguments, string workingDirectory, bool throwErrors = true) {
          if (Config.config.usePowershell) {
             Process process = new Process();
             process.StartInfo = new ProcessStartInfo("powershell.exe", $"{FileName} {arguments}") {
@@ -241,7 +250,11 @@ namespace CobbleBuild {
             process.Start();
             process.WaitForExit();
             if (process.ExitCode != 0) {
-               softError("Deploy process exited with code " + process.ExitCode);
+               var message = "Deploy process exited with code " + process.ExitCode;
+               if (throwErrors)
+                  throw new ApplicationException(message);
+               else
+                  softError(message);
             }
          }
          else {
@@ -253,7 +266,11 @@ namespace CobbleBuild {
             process.Start();
             process.WaitForExit();
             if (process.ExitCode != 0) {
-               softError("Deploy process exited with code " + process.ExitCode);
+               var message = "Deploy process exited with code " + process.ExitCode;
+               if (throwErrors)
+                  throw new ApplicationException(message);
+               else
+                  softError(message);
             }
          }
       }
