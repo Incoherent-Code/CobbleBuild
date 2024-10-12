@@ -115,23 +115,25 @@ namespace CobbleBuild {
                Directory.CreateDirectory(cachePath);
 
             Console.WriteLine("Parsing Kotlin Posers...");
+            var poserTimer = Stopwatch.StartNew();
             var kotlinPosersRoot = Path.Combine(config.kotlinBasePath, "client/render/models/blockbench/pokemon");
             string[] poserPaths = getAllFilesInDirandSubDirs(kotlinPosersRoot, kotlinPosersRoot);
-            var poserTasks = new ActionGroup(config.multithreaded ? ActionGroupType.Async : ActionGroupType.Sync);
+            var poserTasks = new List<Task>();
             foreach (string poserPath in poserPaths) {
-               poserTasks.AddOrRun(() => printExceptionsToConsole(() => {
+               poserTasks.Add(Task.Run(async () => {
                   using (FileStream file = File.OpenRead(poserPath)) {
                      var poser = KotlinPoser.import(file);
                      string poserName = PoserRegistry.mappings![poser.poserName!];
                      PoserRegistry.posers[poserName] = poser;
                      if (config.cachePosers) {
-                        SaveToJson(poser, Path.Combine(cachePath, poserName + ".json"));
+                        await SaveToJsonAsync(poser, Path.Combine(cachePath, poserName + ".json"));
                      }
                   }
                }));
             }
-            var poserReadTime = poserTasks.ExecuteAll();
-            Console.WriteLine($"Finished in {poserReadTime / 1000}s");
+            printExceptionsToConsole(() => Task.WaitAll([.. poserTasks]));
+            poserTimer.Stop();
+            Console.WriteLine($"Finished in {poserTimer.ElapsedMilliseconds / 1000}s");
          }
 
          if (config.buildTasks.Contains("sounds") || config.buildTasks.Contains("importSounds")) {
@@ -198,14 +200,17 @@ namespace CobbleBuild {
             //Also saves on space, technically
             Console.WriteLine("Gathering Animations...");
             var animationsRoot = Path.Combine(config.resourcesPath, "assets/cobblemon/bedrock/pokemon/animations");
-            foreach (string animationPath in getAllFilesInDirandSubDirs(animationsRoot)) {
-               if (animationPath.EndsWith(".json")) {
-                  var animationJson = Import.ReadAnimation(animationPath);
+            var animationTasks = new List<Task>();
+            getAllFilesInDirandSubDirs(animationsRoot)
+               .Where(x => x.EndsWith(".json"))
+               .ToList()
+               .ForEach(animationPath => animationTasks.Add(Task.Run(async () => {
+                  var animationJson = await Import.ReadAnimation(animationPath);
                   foreach (var animation in animationJson.animations) {
                      animations.TryAdd(animation.Key, animation.Value);
                   }
-               }
-            }
+               })));
+            printExceptionsToConsole(() => Task.WaitAll([.. animationTasks]));
 
             Console.WriteLine("Implimenting Pokemon...");
             var pokemonTasks = new List<Task>();
@@ -221,7 +226,7 @@ namespace CobbleBuild {
             Console.WriteLine("Implimenting Pokeballs...");
 
             //Generic Pokeball Model
-            Import.ImportModel("pokeball", Path.Combine(config.resourcesPath, @"assets\cobblemon\bedrock\poke_balls\models\poke_ball.geo.json"), Path.Combine(config.resourcePath, @"models\entity\pokeballs\poke_ball.geo.json"));
+            await Import.ImportModel("pokeball", Path.Combine(config.resourcesPath, @"assets\cobblemon\bedrock\poke_balls\models\poke_ball.geo.json"), Path.Combine(config.resourcePath, @"models\entity\pokeballs\poke_ball.geo.json"));
 
             //Generic Pokeball Animation
             string pokeballAnimationData = File.ReadAllText(Path.Combine(config.resourcesPath, @"assets\cobblemon\bedrock\poke_balls\animations\poke_ball.animation.json"));

@@ -108,11 +108,11 @@ namespace CobbleBuild {
          //Imports blocks using premade black apricorn block as template
          if (apricornName != "black_apricorn") {
             //Apricorn block, sapling, and generated apricorn block
-            Import.ImportUsingTemplate(Path.Combine(config.projectPath, "behavior_packs/CobblemonBedrock/blocks/black_apricorn.block.json"), "black_apricorn", apricornName, Path.Combine(config.behaviorPath, $"blocks/apricorns/{apricornName}.block.json"));
-            Import.ImportUsingTemplate(Path.Combine(config.projectPath, "behavior_packs/CobblemonBedrock/blocks/black_apricorn_generated.block.json"), "black_apricorn", apricornName, Path.Combine(config.behaviorPath, $"blocks/apricorns/{apricornName}_generated.block.json"));
-            Import.ImportUsingTemplate(Path.Combine(config.projectPath, "behavior_packs/CobblemonBedrock/blocks/black_apricorn_seed.block.json"), "black_apricorn", apricornName, Path.Combine(config.behaviorPath, $"blocks/apricorns/{apricornName}_seed.block.json"));
+            await Import.ImportUsingTemplate(Path.Combine(config.projectPath, "behavior_packs/CobblemonBedrock/blocks/black_apricorn.block.json"), "black_apricorn", apricornName, Path.Combine(config.behaviorPath, $"blocks/apricorns/{apricornName}.block.json"));
+            await Import.ImportUsingTemplate(Path.Combine(config.projectPath, "behavior_packs/CobblemonBedrock/blocks/black_apricorn_generated.block.json"), "black_apricorn", apricornName, Path.Combine(config.behaviorPath, $"blocks/apricorns/{apricornName}_generated.block.json"));
+            await Import.ImportUsingTemplate(Path.Combine(config.projectPath, "behavior_packs/CobblemonBedrock/blocks/black_apricorn_seed.block.json"), "black_apricorn", apricornName, Path.Combine(config.behaviorPath, $"blocks/apricorns/{apricornName}_seed.block.json"));
             //Worldgen
-            Import.ImportUsingTemplate(Path.Combine(config.projectPath, "behavior_packs/CobblemonBedrock/features/black_apricorn_prefab.json"), "black_apricorn", apricornName, Path.Combine(config.behaviorPath, $"features/{apricornName}_prefab.json"));
+            await Import.ImportUsingTemplate(Path.Combine(config.projectPath, "behavior_packs/CobblemonBedrock/features/black_apricorn_prefab.json"), "black_apricorn", apricornName, Path.Combine(config.behaviorPath, $"features/{apricornName}_prefab.json"));
          }
 
          //Creates Placers

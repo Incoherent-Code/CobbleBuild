@@ -10,6 +10,7 @@ namespace CobbleBuild {
          Block,
          Item
       }
+      [Obsolete]
       public static List<string> ImportJavaModels = new List<string>()
       {
             "assets/cobblemon/models/block/black_apricorn.json",
@@ -24,41 +25,26 @@ namespace CobbleBuild {
             //"assets/cobblemon/models/block/pasture_top_on.json"
         };
       //Import path and export path INCLUDE filenames
-      public static void ImportModel(string geoName, string ImportPath, string OutputPath, out Geometry geometry) //Geo name does not include geometry.
+      public static async Task ImportModel(string geoName, string ImportPath, string OutputPath) //Geo name does not include geometry.
       {
-         string modelData = File.ReadAllText(ImportPath);
-         GeometryJson deserializedModel = JsonConvert.DeserializeObject<GeometryJson>(modelData);
+         GeometryJson deserializedModel = await Misc.LoadFromJsonAsync<GeometryJson>(ImportPath);
          deserializedModel.geometry[0].description.identifier = "geometry." + geoName; //You have no idea how many models are incorrectly identified
          PostProcessor.PostProcess(ref deserializedModel);
-         geometry = deserializedModel.geometry[0];
-         string newModelData = JsonConvert.SerializeObject(deserializedModel, Config.config.SerializerSettings);
-         File.WriteAllText(OutputPath, newModelData);
-      }
-      //If geometry out is unnecessary
-      public static void ImportModel(string geoName, string ImportPath, string OutputPath) {
-         Geometry Geo;
-         ImportModel(geoName, ImportPath, OutputPath, out Geo);
+         var geometry = deserializedModel.geometry[0];
+         await Misc.SaveToJsonAsync(geometry, OutputPath);
       }
 
       //Convert Models from Java to Bedrock before Saving them
-      public static void ImportJavaModel(string ImportPath, string OutputPath, out GeometryJson geometry) {
-         string modelData = File.ReadAllText(ImportPath);
-         JavaModel deserializedModel = JsonConvert.DeserializeObject<JavaModel>(modelData);
-         geometry = ConversionTechnology.BlockModelConversion.convertToBedrock(deserializedModel, Path.GetFileNameWithoutExtension(ImportPath));
-         string newModelData = JsonConvert.SerializeObject(geometry, Config.config.SerializerSettings);
-         File.WriteAllText(OutputPath, newModelData);
-      }
-      //If geometry out is unnecessary
-      public static void ImportJavaModel(string ImportPath, string OutputPath) {
-         GeometryJson Geo;
-         ImportJavaModel(ImportPath, OutputPath, out Geo);
+      public static async Task ImportJavaModel(string ImportPath, string OutputPath) {
+         JavaModel deserializedModel = await Misc.LoadFromJsonAsync<JavaModel>(ImportPath);
+         var geometry = ConversionTechnology.BlockModelConversion.convertToBedrock(deserializedModel, Path.GetFileNameWithoutExtension(ImportPath));
+         await Misc.SaveToJsonAsync(geometry, OutputPath);
       }
       /// <summary>
       /// Returns the animationJson from the specified filepath.
       /// </summary>
-      public static AnimationJson ReadAnimation(string ImportFile) {
-         string animationData = File.ReadAllText(ImportFile);
-         AnimationJson animationJSON = JsonConvert.DeserializeObject<AnimationJson>(animationData); //Parsing just gets rid of junk data like gecko_lib_version that bedrock complains about
+      public static async Task<AnimationJson> ReadAnimation(string ImportFile) {
+         AnimationJson animationJSON = await Misc.LoadFromJsonAsync<AnimationJson>(ImportFile); //Parsing just gets rid of junk data like gecko_lib_version that bedrock complains about
          PostProcessor.PostProcess(ref animationJSON);
          return animationJSON;
       }
@@ -114,11 +100,11 @@ namespace CobbleBuild {
       /// <param name="original">String to replace</param>
       /// <param name="replace">String to replace with</param>
       /// <param name="outputPath">Output path of the final text file.</param>
-      public static void ImportUsingTemplate(string TemplatePath, string original, string replace, string outputPath) //Takes a text template file and relaces all occurences of "original" with "replace" and saves it
+      public static async Task ImportUsingTemplate(string TemplatePath, string original, string replace, string outputPath) //Takes a text template file and relaces all occurences of "original" with "replace" and saves it
       {
-         string templateData = File.ReadAllText(TemplatePath);
+         string templateData = await File.ReadAllTextAsync(TemplatePath);
          templateData = templateData.Replace(original, replace);
-         File.WriteAllText(outputPath, templateData);
+         await File.WriteAllTextAsync(outputPath, templateData);
       }
 
       public static async Task ImportTexturesInLayersAsUV(List<ResolverVariation.Layer> layers, string variationName, Pokemon pokemon) {
@@ -189,25 +175,6 @@ namespace CobbleBuild {
                Directory.CreateDirectory(Path.GetDirectoryName(newPath)!);
                await Misc.CopyAsync(ogPath, newPath);
             }
-         }
-      }
-      /// <summary>
-      /// Currently unused because even a perfect translation would have issues.
-      /// </summary>
-      [Obsolete]
-      public static void ImportAllRegisteredJavaModels() {
-         foreach (string item in ImportJavaModels) {
-            string path = Path.Combine(Config.config.resourcesPath, item);
-            string name = Path.GetFileNameWithoutExtension(path);
-            //Creates Generic Apricorn Geo
-            if (item == "assets/cobblemon/models/block/black_apricorn.json") {
-               GeometryJson geo;
-               ImportJavaModel(path, Path.Combine(Config.config.resourcePath, $"models/blocks/{name}.geo.json"), out geo);
-               geo.geometry[0].description.identifier = "geometry.cobblemon.apricorn.base";
-               File.WriteAllText(Path.Combine(Config.config.resourcePath, $"models/blocks/apricorn.geo.json"), JsonConvert.SerializeObject(geo, Config.config.SerializerSettings));
-            }
-
-            ImportJavaModel(path, Path.Combine(Config.config.resourcePath, $"models/blocks/{name}.geo.json"));
          }
       }
    }
