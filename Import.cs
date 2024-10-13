@@ -24,14 +24,19 @@ namespace CobbleBuild {
             //"assets/cobblemon/models/block/pasture_top_off.json",
             //"assets/cobblemon/models/block/pasture_top_on.json"
         };
-      //Import path and export path INCLUDE filenames
+      /// <summary>
+      /// Imports a model. The model is processed before being copied to the destination.
+      /// </summary>
+      /// <param name="geoName">Name the geometry should take (not including geometry. )</param>
+      /// <param name="ImportPath">Path to the file INCLUDING FILENAME</param>
+      /// <param name="OutputPath">Path to where the model should output INCLUDING FILENAME</param>
+      /// <returns></returns>
       public static async Task ImportModel(string geoName, string ImportPath, string OutputPath) //Geo name does not include geometry.
       {
          GeometryJson deserializedModel = await Misc.LoadFromJsonAsync<GeometryJson>(ImportPath);
          deserializedModel.geometry[0].description.identifier = "geometry." + geoName; //You have no idea how many models are incorrectly identified
          PostProcessor.PostProcess(ref deserializedModel);
-         var geometry = deserializedModel.geometry[0];
-         await Misc.SaveToJsonAsync(geometry, OutputPath);
+         await Misc.SaveToJsonAsync(deserializedModel, OutputPath, false);
       }
 
       //Convert Models from Java to Bedrock before Saving them
@@ -155,27 +160,31 @@ namespace CobbleBuild {
       /// NOTE: Mutates the original json to remove sounds less than 125 ms (way of removing empty sounds)
       /// </summary>
       public static async Task ImportAllSoundsFromSoundDef(SoundDefinitionJson json) {
+         var soundTasks = new List<Task>();
          foreach (var soundDef in json.sound_definitions.Values) {
             foreach (var sound in (List<SoundDefinition.Sound>)[.. soundDef.sounds]) {
-               var ogPath = Path.Combine(Config.config.resourcesPath, "assets/cobblemon", sound.name + ".ogg");
-               var newPath = Path.Combine(Config.config.resourcePath, sound.name + ".ogg");
+               soundTasks.Add(Task.Run(async () => {
+                  var ogPath = Path.Combine(Config.config.resourcesPath, "assets/cobblemon", sound.name + ".ogg");
+                  var newPath = Path.Combine(Config.config.resourcePath, sound.name + ".ogg");
 
-               if (!File.Exists(ogPath)) {
-                  soundDef.sounds.Remove(sound);
-                  continue;
-               }
+                  if (!File.Exists(ogPath)) {
+                     soundDef.sounds.Remove(sound);
+                     return;
+                  }
 
-               //Filters out unnecessary dummy sounds from cobblemon.
-               var soundReader = new NVorbis.VorbisReader(ogPath);
-               if (soundReader.TotalTime.Milliseconds < 125) {
-                  soundDef.sounds.Remove(sound);
-                  continue;
-               }
+                  //Filters out unnecessary dummy sounds from cobblemon.
+                  var soundReader = new NVorbis.VorbisReader(ogPath);
+                  if (soundReader.TotalTime.Milliseconds < 125) {
+                     soundDef.sounds.Remove(sound);
+                     return;
+                  }
 
-               Directory.CreateDirectory(Path.GetDirectoryName(newPath)!);
-               await Misc.CopyAsync(ogPath, newPath);
+                  Directory.CreateDirectory(Path.GetDirectoryName(newPath)!);
+                  await Misc.CopyAsync(ogPath, newPath);
+               }));
             }
          }
+         await Task.WhenAll(soundTasks);
       }
    }
 }

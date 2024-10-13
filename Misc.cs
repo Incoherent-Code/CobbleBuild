@@ -73,10 +73,10 @@ namespace CobbleBuild {
       }
    }
    internal static class Misc {
-      public static List<string> validRegionalVariants = ["alolan", "galarian", "valencian"];
-      private static string generatedDisclaimer = @"/* This File was generated with CobbleBuild.
+      public static List<string> validRegionalVariants { get; set; } = ["alolan", "galarian", "valencian"];
+      private static string generatedDisclaimer = @"/* This File was generated and/or processed with CobbleBuild.
  * These files might be overwritable in the future, but for now please submit any issues to CobbleBuild
- * instead of fixing them here. 
+ * instead of fixing them here. This file should not be overwritten in cobblemon-bedrock.
  */
 ";
       /// <summary>
