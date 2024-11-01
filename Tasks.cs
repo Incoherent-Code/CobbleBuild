@@ -29,9 +29,10 @@ namespace CobbleBuild {
                warn($"Spawn File Conversion for {pokemon.shortName} Failed and returned null.");
             }
          }
-         else {
-            warn("No spawn file found for " + pokemon.shortName);
-         }
+         //Does not need a warning
+         //else {
+         //   warn("No spawn file found for " + pokemon.shortName);
+         //}
 
          //Creates Loot Table for Cobblemon
          LootTableJson? loot = LootConversion.convertToBedrock(pokemon.data.drops);
