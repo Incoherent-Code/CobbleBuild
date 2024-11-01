@@ -200,17 +200,15 @@ namespace CobbleBuild {
             //Also saves on space, technically
             Console.WriteLine("Gathering Animations...");
             var animationsRoot = Path.Combine(config.resourcesPath, "assets/cobblemon/bedrock/pokemon/animations");
-            var animationTasks = new List<Task>();
-            getAllFilesInDirandSubDirs(animationsRoot)
-               .Where(x => x.EndsWith(".json"))
-               .ToList()
-               .ForEach(animationPath => animationTasks.Add(Task.Run(async () => {
-                  var animationJson = await Import.ReadAnimation(animationPath);
-                  foreach (var animation in animationJson.animations) {
-                     animations.TryAdd(animation.Key, animation.Value);
-                  }
-               })));
-            printExceptionsToConsole(() => Task.WaitAll([.. animationTasks]));
+            var animationDirs = getAllFilesInDirandSubDirs(animationsRoot)
+               .Where(x => x.EndsWith(".json"));
+
+            foreach (var animationPath in animationDirs) {
+               var animationJson = await Import.ReadAnimation(animationPath);
+               foreach (var animation in animationJson.animations) {
+                  animations.TryAdd(animation.Key, animation.Value);
+               }
+            };
 
             Console.WriteLine("Implimenting Pokemon...");
             var pokemonTasks = new List<Task>();
