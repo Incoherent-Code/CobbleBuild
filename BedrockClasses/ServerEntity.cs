@@ -235,6 +235,9 @@ namespace CobbleBuild.BedrockClasses {
       /// Not all event nodes are in here, but the basic cones are
       /// </summary>
       public class Event {
+         public Event Clone() {
+            return JsonConvert.DeserializeObject<Event>(JsonConvert.SerializeObject(this))!;
+         }
          public AddClass? add { get; set; }
          public RemoveClass? remove { get; set; }
          public List<RandomObject>? randomize { get; set; }

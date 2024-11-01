@@ -10,7 +10,7 @@ namespace CobbleBuild.BedrockClasses {
       public int maxLevel;
 
       public Dictionary<int, List<string>> variationMap = new Dictionary<int, List<string>>();
-      public Dictionary<int, ScriptedConditions> spawnConditionsMap = new Dictionary<int, ScriptedConditions>();
+      public Dictionary<string, ScriptedConditions> spawnConditionsMap = new Dictionary<string, ScriptedConditions>();
 
       public OutputData(Pokemon pokemon) {
          foreach (var prop in pokemon.data.GetType().GetFields()) {
@@ -29,9 +29,34 @@ namespace CobbleBuild.BedrockClasses {
                if (pokemon.spawnData.spawns[i].condition == null)
                   continue;
 
-               var spawnCondition = pokemon.spawnData.spawns[i].condition;
-               int[] minMaxArray = pokemon.spawnData.spawns[i].level.Split("-").Select(n => int.Parse(n)).ToArray();
-               spawnConditionsMap.Add(i, new ScriptedConditions(minMaxArray[0], minMaxArray[1], spawnCondition.isRaining, spawnCondition.timeRange));
+               var spawn = pokemon.spawnData.spawns[i];
+               var spawnCondition = spawn.condition;
+               int[] minMaxArray = spawn.level.Split("-").Select(n => int.Parse(n)).ToArray();
+               var newScriptedCondition = new ScriptedConditions(minMaxArray[0], minMaxArray[1], spawnCondition.isRaining, spawnCondition.isThundering, spawnCondition.timeRange);
+               spawnConditionsMap[i.ToString()] = newScriptedCondition;
+               if (spawn.weightMultiplier != null && spawn.weightMultiplier.multiplier != 0) {
+                  var multipliedCondition = spawn.weightMultiplier.condition;
+                  //If being applied as an anticondition
+                  if (spawn.weightMultiplier.multiplier < 1) {
+                     spawnConditionsMap[i.ToString() + 'm'] = newScriptedCondition;
+                     spawnConditionsMap[i.ToString()] = new ScriptedConditions(
+                        minMaxArray[0],
+                        minMaxArray[1],
+                        (multipliedCondition.isRaining != null) ? !multipliedCondition.isRaining : spawnCondition.isRaining,
+                        (multipliedCondition.isThundering != null) ? !multipliedCondition.isThundering : spawnCondition.isThundering,
+                        InvertTimeRange(multipliedCondition.timeRange) ?? spawnCondition.timeRange
+                     );
+                  }
+                  else {
+                     spawnConditionsMap[i.ToString() + 'm'] = new ScriptedConditions(
+                        minMaxArray[0],
+                        minMaxArray[1],
+                        multipliedCondition.isRaining ?? spawnCondition.isRaining,
+                        multipliedCondition.isThundering ?? spawnCondition.isThundering,
+                        multipliedCondition.timeRange ?? spawnCondition.timeRange
+                     );
+                  }
+               }
             }
          }
          else {
@@ -43,19 +68,36 @@ namespace CobbleBuild.BedrockClasses {
             variationMap.Add(i, pokemon.Variations[i].aspects);
          }
       }
+
+      private static string? InvertTimeRange(string? timeRange) {
+         if (timeRange == null)
+            return null;
+         switch (timeRange) {
+            case "day":
+               return "night";
+            case "night":
+               return "day";
+            default:
+               Misc.warn($"Could not invert time range '${timeRange}'");
+               return null;
+         }
+      }
       /// <summary>
       /// This class is meant to hold checks that the javascript code will have to check upon spawning because
       /// they cannot be checked using spawn rules
       /// </summary>
       public class ScriptedConditions {
          public bool? isRaining;
+         public bool? isThundering;
          public string? timeRange;
          public int minLevel;
          public int maxLevel;
-         public ScriptedConditions(int minLevel, int maxLevel, bool? isRaining, string? timeRange) {
+         /// <param name="timeRange">The same timerange format that exists in the cobblemon spawn condition</param>
+         public ScriptedConditions(int minLevel, int maxLevel, bool? isRaining, bool? isThundering, string? timeRange) {
             this.minLevel = minLevel;
             this.maxLevel = maxLevel;
             this.isRaining = isRaining;
+            this.isThundering = isThundering;
             this.timeRange = timeRange;
          }
       }

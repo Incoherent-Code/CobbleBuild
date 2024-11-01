@@ -13,6 +13,17 @@ namespace CobbleBuild.BedrockClasses {
       }
    }
    public class SpawnRules {
+
+      public DescriptionClass description;
+      public List<ConditionClass> conditions;
+      public SpawnRules(string identifier, string populationType, List<ConditionClass> condition) {
+         description = new DescriptionClass(identifier, populationType);
+         conditions = condition;
+      }
+      //This seems really silly but should be fine and is just the easiest solution without some sort of library
+      public SpawnRules Clone() {
+         return JsonConvert.DeserializeObject<SpawnRules>(JsonConvert.SerializeObject(this))!;
+      }
       public class DescriptionClass {
          public string identifier;
          public string population_control;
@@ -76,11 +87,16 @@ namespace CobbleBuild.BedrockClasses {
          }
 
          public ConditionClass() { }
+         //This seems really silly but should be fine and is just the easiest solution without some sort of library
+         public ConditionClass Clone() {
+            return JsonConvert.DeserializeObject<ConditionClass>(JsonConvert.SerializeObject(this))!;
+         }
          /// <summary>
          /// Applies a cobblemon spawn condition to this bedrock condition
          /// </summary>
+         /// <param name="definite">Whether or not this is combining with the other condition or applying on top. (if blocks need to be added to the list or use an .Intersect())</param>
          /// <param name="antiCondition">Whether or not this condition will behave like an anticondition</param>
-         public void ApplyCondition(CobblemonSpawnCondition condition, bool antiCondition = false) {
+         public void ApplyCondition(CobblemonSpawnCondition condition, bool definite = false, bool antiCondition = false) {
             //Filtering by Biome
             if (condition.biomes != null) {
                List<Filter> any_of_filter = new List<Filter>();
@@ -117,12 +133,13 @@ namespace CobbleBuild.BedrockClasses {
             }
 
             //Block Filtering
+            //Only overwrite if not an anticondition
             if (condition.neededNearbyBlocks != null) {
-               this.addBlocksToListIfValid(condition.neededNearbyBlocks, ref (antiCondition ? ref this.prevented_blocks : ref this.valid_spawn_blocks));
+               this.addBlocksToListIfValid(condition.neededNearbyBlocks, ref (antiCondition ? ref this.prevented_blocks : ref this.valid_spawn_blocks), definite && !antiCondition);
             }
 
             if (condition.neededBaseBlocks != null) {
-               this.addBlocksToListIfValid(condition.neededBaseBlocks, ref (antiCondition ? ref this.prevented_blocks : ref this.valid_spawn_blocks));
+               this.addBlocksToListIfValid(condition.neededBaseBlocks, ref (antiCondition ? ref this.prevented_blocks : ref this.valid_spawn_blocks), definite && !antiCondition);
             }
 
             //Height
@@ -157,12 +174,13 @@ namespace CobbleBuild.BedrockClasses {
             }
          }
 
-         public void ApplyAnticondition(CobblemonSpawnCondition condition) {
-            this.ApplyCondition(condition, true);
+         public void ApplyAnticondition(CobblemonSpawnCondition condition, bool definite = false) {
+            this.ApplyCondition(condition, definite, true);
          }
-         private void addBlocksToListIfValid(string[] blockIds, ref List<string>? listToApplyTo) {
-            if (listToApplyTo == null)
-               listToApplyTo = new List<string>();
+         /// <param name="overwrite">Overwrites the list entirely</param>
+         private void addBlocksToListIfValid(string[] blockIds, ref List<string>? listToApplyTo, bool overwrite) {
+            bool preexistingList = listToApplyTo != null;
+            var newList = new List<string>();
             foreach (string block in blockIds) { //Refrences to other block sets are ignored for now
                var item = resolveBlock(block);
                item = item.Select(x => { //Replace sugar cane because it is a unique case where the item and block have different ids
@@ -171,30 +189,19 @@ namespace CobbleBuild.BedrockClasses {
                   else
                      return x;
                }).ToList();
-               listToApplyTo = listToApplyTo.Union(item).ToList();
+               newList = newList.Union(item).ToList();
             }
-         }
-         public void addRequiredBlocks(string[] blockIds) {
-            addBlocksToListIfValid(blockIds, ref this.valid_spawn_blocks);
-         }
-         public void addDisallowedBlocks(string[] blockIds) {
-            addBlocksToListIfValid(blockIds, ref this.prevented_blocks);
+            //If multiple requirements, 
+            listToApplyTo = (preexistingList && !overwrite) ? listToApplyTo!.Union(newList).ToList() : newList;
          }
       }
 
       public class SpawnWeight {
          [JsonProperty("default")]
-         public int @default;
-         public SpawnWeight(int weight) {
+         public float @default;
+         public SpawnWeight(float weight) {
             @default = weight;
          }
-      }
-
-      public DescriptionClass description;
-      public List<ConditionClass> conditions;
-      public SpawnRules(string identifier, string populationType, List<ConditionClass> condition) {
-         description = new DescriptionClass(identifier, populationType);
-         conditions = condition;
       }
 
    }

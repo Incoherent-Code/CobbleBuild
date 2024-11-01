@@ -14,16 +14,23 @@
       public float weight;
       public CobblemonSpawnCondition? condition;
       public CobblemonSpawnCondition? anticondition;
+      public SpawnWeightMultiplier? weightMultiplier;
    }
    public class CobblemonSpawnCondition {
       public bool? canSeeSky;
       public string[]? biomes;
       public bool? isRaining;
+      public bool? isThundering;
       public string[]? structures;
       public int? minY;
       public string[]? neededBaseBlocks;
       public string[]? neededNearbyBlocks;
       public string? fluid;
       public string? timeRange;
+   }
+
+   public class SpawnWeightMultiplier {
+      public float multiplier;
+      public CobblemonSpawnCondition condition;
    }
 }

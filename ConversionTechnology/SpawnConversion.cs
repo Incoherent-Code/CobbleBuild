@@ -7,14 +7,13 @@ namespace CobbleBuild.ConversionTechnology {
 
       //Preset Information
       public static Dictionary<string, CobblemonSpawnPresetJson> presetDefinitions = [];
-
-      public static Dictionary<string, MinMaxSize> toHerd = new Dictionary<string, MinMaxSize>()
-      {
-            {"common", new MinMaxSize(2,4)},
-            {"uncommon", new MinMaxSize(1,2)},
-            {"rare", new MinMaxSize(1,1)},
-            {"ultra-rare", new MinMaxSize(1,1)}
-        };
+      //Im just guessing with these values
+      public static readonly Dictionary<string, float> bucketMultipliers = new Dictionary<string, float>() {
+         { "common", 1f },
+         { "uncommon", 0.5f },
+         { "rare", 0.1f },
+         { "ultra-rare", 0.03f }
+      };
       /// <summary>
       /// This returns corresponding biome tags for each biome. We use biome tags because the docs suggest
       /// the "is_biome" comparison is not up to date with every current biome.
@@ -109,7 +108,7 @@ namespace CobbleBuild.ConversionTechnology {
             {"stone", new string[] {"stone"}},
             {"stony_peaks", new string[] {"mountains"}}, //Not included in stone tag !?!?!?!?
             {"stony_shore", new string[] {"stone","beach"}},
-            {"sunflower_plains", new string[] {"plains"}}, //No Differenciation in Biome Tags
+            {"sunflower_plains", new string[] {"plains", "mutated"}},
             {"swamp", new string[] {"swamp"}},
             {"taiga", new string[] {"taiga"}},
             {"the_end", new string[] {"the_end"}},
@@ -119,7 +118,7 @@ namespace CobbleBuild.ConversionTechnology {
             {"windswept_hills", ["extreme_hills"] },
             {"windswept_forest", ["extreme_hills", "forest"] },
             {"windswept_gravelly_hills", ["extreme_hills", "mutated"] },
-            {"windswept_savanna", ["savana","mutated"] },
+            {"windswept_savanna", ["savanna","mutated"] },
             {"wooded_badlands", ["mesa", "plateau"] },
             {"eroded_badlands", ["mesa", "mutated"] } //Close enough
         };
@@ -127,6 +126,10 @@ namespace CobbleBuild.ConversionTechnology {
       {
             "warped_forrest", "nether", "nether_wastes", "soulsand_valley", "basalt_deltas", "crimson_forrest"
         };
+      /// <summary>
+      /// Time ranges that are known and can be processed by the javascript.
+      /// </summary>
+      public static readonly List<string> knownTimeRanges = ["day", "night"];
       /// <summary>
       /// Scrapes source files for pertinent biome tag information as well as preset data
       /// </summary>
@@ -143,18 +146,24 @@ namespace CobbleBuild.ConversionTechnology {
          string identifier = "cobblemon:" + json.spawns[0].pokemon.ToLower().Replace(" ", "_");
          List<SpawnRules.ConditionClass> conditions = new List<SpawnRules.ConditionClass>();
          for (int i = 0; i < json.spawns.Length; i++) {
+            //if (identifier == "cobblemon:murkrow") {
+            //   Debugger.Break();
+            //}
             SpawnRules.ConditionClass newCondition = new SpawnRules.ConditionClass();
             var spawnClass = json.spawns[i];
 
             //Initialize Stuff
-            newCondition.valid_spawn_blocks = new List<string>();
-            newCondition.prevented_blocks = new List<string>();
+            //newCondition.valid_spawn_blocks = new List<string>();
+            //newCondition.prevented_blocks = new List<string>();
 
-            //transfer weight (decimals are not supported in bedrock so weight is multplied by ten to include the first decimal point)
-            newCondition.weight = new SpawnRules.SpawnWeight((int)(spawnClass.weight * 10));
+            //Warnings about time ranges not currently handled in the typescript base
+            if (spawnClass.condition?.timeRange != null && !knownTimeRanges.Contains(spawnClass.condition.timeRange))
+               Misc.warn($"Unknown time range {spawnClass.condition.timeRange}");
+            if (spawnClass.anticondition?.timeRange != null && !knownTimeRanges.Contains(spawnClass.anticondition.timeRange))
+               Misc.warn($"Unknown time range {spawnClass.anticondition.timeRange}");
 
-            //Use dictionary to determine herding
-            newCondition.herding = toHerd[spawnClass.bucket];
+            //Spawn Weight
+            newCondition.weight = new SpawnRules.SpawnWeight(spawnClass.weight * (bucketMultipliers[spawnClass.bucket]));
 
             //Reads context from preset if valid (uses the first one it finds)
             if (spawnClass.context == null && spawnClass.presets != null && spawnClass.presets.Length > 0) {
@@ -181,18 +190,11 @@ namespace CobbleBuild.ConversionTechnology {
                throw new NotImplementedException($"Context {spawnClass.context} is not implimented!");
             }
 
-            //Handle conditions
-            if (spawnClass.condition != null)
-               newCondition.ApplyCondition(spawnClass.condition);
-            if (spawnClass.anticondition != null)
-               newCondition.ApplyAnticondition(spawnClass.anticondition);
-
             //Using presets
             if (spawnClass.presets != null && spawnClass.presets.Length > 0) {
                foreach (var preset in spawnClass.presets) {
-                  if (preset == null || !presetDefinitions.ContainsKey(preset))
+                  if (preset == null || !presetDefinitions.TryGetValue(preset, out var presetData))
                      continue;
-                  var presetData = presetDefinitions[preset];
 
                   if (presetData.condition != null) {
                      //If a structure is required, ignore the condition
@@ -209,13 +211,49 @@ namespace CobbleBuild.ConversionTechnology {
                }
             }
 
-            if (newCondition.valid_spawn_blocks.Count < 1)
-               newCondition.valid_spawn_blocks = null;
-            if (newCondition.prevented_blocks.Count < 1)
+            //Handle conditions
+            if (spawnClass.condition != null)
+               newCondition.ApplyCondition(spawnClass.condition, true);
+            if (spawnClass.anticondition != null)
+               newCondition.ApplyAnticondition(spawnClass.anticondition, true);
+
+            //If these lists are initialized but empty, then they are probably intended for modded blocks and the condition should be disabled
+            if (newCondition.valid_spawn_blocks != null && newCondition.valid_spawn_blocks.Count < 1)
+               continue;
+            //Not necessary for prevented blocks tho
+            if (newCondition.prevented_blocks != null && newCondition.prevented_blocks.Count < 1)
                newCondition.prevented_blocks = null;
 
             //Calls the entity with the correct spawn event for scripting to identify
             newCondition.permute_types = [new SpawnRules.ConditionClass.PermuteType(100, identifier, $"cobblemon:spawn_condition_{i}")];
+
+            if (newCondition.weight.@default == 0)
+               continue;
+
+
+
+            //Our emulation of weightMultipliers
+            if (spawnClass.weightMultiplier != null && spawnClass.weightMultiplier.condition != null) {
+               //Skip multipliers with structure requirements
+               if (spawnClass.weightMultiplier.condition.structures != null && spawnClass.weightMultiplier.condition.structures.Length > 0)
+                  continue;
+               var multipliedCondition = newCondition.Clone();
+               //If the multiplier is increasing the odds
+               if (spawnClass.weightMultiplier.multiplier > 1) {
+                  multipliedCondition.weight = new SpawnRules.SpawnWeight((spawnClass.weightMultiplier.multiplier - 1) * newCondition.weight.@default);
+                  multipliedCondition.ApplyCondition(spawnClass.weightMultiplier.condition, true);
+               }
+               //If the multiplier decreases the odds on that condition
+               else {
+                  var currentWeight = newCondition.weight.@default;
+                  var multiplierWeight = currentWeight * spawnClass.weightMultiplier.multiplier;
+                  multipliedCondition.weight = new SpawnRules.SpawnWeight(multiplierWeight);
+                  newCondition.weight = new SpawnRules.SpawnWeight(currentWeight - multiplierWeight);
+                  newCondition.ApplyAnticondition(spawnClass.weightMultiplier.condition, true);
+               }
+               multipliedCondition.permute_types = [new SpawnRules.ConditionClass.PermuteType(100, identifier, $"cobblemon:spawn_condition_{i}m")];
+               conditions.Add(multipliedCondition);
+            }
 
             conditions.Add(newCondition);
          //Skip spawn conditions with structure requirements because we cannot check those

@@ -50,20 +50,20 @@ namespace CobbleBuild.DataCreator {
          {
                 {"cobblemon:in_battle", Property.makeBool(false, true) },
                 {"cobblemon:initialized", Property.makeBool(false, true) },
-                {"cobblemon:spawn_condition_used", Property.makeInt(-1, 0, -1, false) }, // -1 indicates not spawned using spawn file
+                {"cobblemon:spawn_condition_used", Property.makeEnum(["none", "spawn_0"], "none", false) }, // -1 indicates not spawned using spawn file
                 {"cobblemon:wild", Property.makeBool(true, true) },
                 {"cobblemon:busy", Property.makeBool(false, true) }
             };
 
          // Setup for different variations
          if (pokemon.spawnData != null && pokemon.spawnData.spawns.Length > 0) {
-            output.description.properties["cobblemon:spawn_condition_used"] = Property.makeInt(-1, pokemon.spawnData.spawns.Length - 1, -1, false);
+            output.description.properties["cobblemon:spawn_condition_used"] = GetSpawnConditionEnum(pokemon.spawnData.spawns);
             for (int i = 0; i < pokemon.spawnData.spawns.Length; i++) {
                var spawn = pokemon.spawnData.spawns[i];
                var @event = new Event() { sequence = new List<Event.SequenceObject>() };
                var setPropertyEvent = new Event.SequenceObject() {
                   set_property = new Dictionary<string, object> {
-                            {"cobblemon:spawn_condition_used", i }
+                            {"cobblemon:spawn_condition_used", "spawn_" + i.ToString() }
                         }
                };
                @event.sequence.Add(setPropertyEvent);
@@ -100,6 +100,17 @@ namespace CobbleBuild.DataCreator {
 
                @event.sequence.Add(randomizeEvent);
                output.events.Add("cobblemon:spawn_condition_" + i, @event);
+
+               if (spawn.weightMultiplier != null && spawn.weightMultiplier.multiplier != null) {
+                  var multipliedEvent = @event.Clone();
+                  //Should line up with the property setter on the original
+                  multipliedEvent.sequence![0] = new Event.SequenceObject() {
+                     set_property = new Dictionary<string, object> {
+                        { "cobblemon:spawn_condition_used", "spawn_" + i.ToString() + "m" }
+                     }
+                  };
+                  output.events.Add("cobblemon:spawn_condition_" + i.ToString() + "m", multipliedEvent);
+               }
             }
          }
 
@@ -268,6 +279,21 @@ namespace CobbleBuild.DataCreator {
          }
 
          return new ServerEntityJson(output);
+      }
+
+      private static ServerEntity.Property GetSpawnConditionEnum(CobblemonSpawn[] conditions) {
+         List<string> enums = [];
+         for (int i = 0; i < conditions.Length; i++) {
+            enums.Add("spawn_" + i.ToString());
+            if (conditions[i].weightMultiplier != null && conditions[i].weightMultiplier!.multiplier != null) {
+               enums.Add("spawn_" + i.ToString() + 'm');
+            }
+         }
+         if (enums.Count > 15) {
+            Misc.warn($"Pokemon ${conditions[0].pokemon} has too many spawn conditions.");
+            enums = enums.Slice(0, 15);
+         }
+         return Property.makeEnum(["none", .. enums], "none", false);
       }
 
       //Create Pokeball

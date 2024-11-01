@@ -196,6 +196,10 @@ namespace CobbleBuild.JavaClasses {
             case "#minecraft:dirt_like":
                block = "#minecraft:dirt";
                break;
+            case "#cobblemon:redstone_ores":
+            case "#c:redstone_ores":
+               block = "minecraft:redstone_ore";
+               break;
             case "#minecraft:gravel":
             case "#minecraft:grass":
             case "#minecraft:water":
@@ -213,7 +217,7 @@ namespace CobbleBuild.JavaClasses {
 
          //Normal block id
          if (!block.StartsWith("#")) {
-            if (!block.StartsWith("minecraft:") || !block.StartsWith("cobblemon:"))
+            if (!block.StartsWith("minecraft:") && !block.StartsWith("cobblemon:"))
                return [];
 
             if (JavaToBedrockItemNames.ContainsKey(block)) {
@@ -260,7 +264,7 @@ namespace CobbleBuild.JavaClasses {
          if (itemTag.StartsWith("#"))
             itemTag = itemTag.Substring(1);
          var mcData = (itemTag.StartsWith("minecraft:")) ? JavaData.minecraftData
-            : (itemTag.StartsWith("cobblemon:")) ? JavaData.cobblemonData : null;
+            : (itemTag.StartsWith("cobblemon:") || itemTag.StartsWith("c:")) ? JavaData.cobblemonData : null;
          if (mcData == null)
             return null;
          if (!Misc.tryRemoveNamespace(itemTag, out var itemTagNoNamespace))
