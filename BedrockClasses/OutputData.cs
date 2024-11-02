@@ -1,4 +1,6 @@
 ﻿using CobbleBuild.CobblemonClasses;
+using CobbleBuild.ConversionTechnology;
+using CobbleBuild.JavaClasses;
 
 namespace CobbleBuild.BedrockClasses {
    /// <summary>
@@ -28,32 +30,82 @@ namespace CobbleBuild.BedrockClasses {
             for (int i = 0; i < pokemon.spawnData.spawns.Length; i++) {
                if (pokemon.spawnData.spawns[i].condition == null)
                   continue;
-
+               //Processing Anticonditions needs to happen at some point
                var spawn = pokemon.spawnData.spawns[i];
-               var spawnCondition = spawn.condition;
+               var spawnCondition = spawn.condition!;
                int[] minMaxArray = spawn.level.Split("-").Select(n => int.Parse(n)).ToArray();
-               var newScriptedCondition = new ScriptedConditions(minMaxArray[0], minMaxArray[1], spawnCondition.isRaining, spawnCondition.isThundering, spawnCondition.timeRange);
+
+               //Handling neededNearbyBlocks
+               List<string[]>? neededNearbyBlocks = [];
+               List<string[]>? preventedNearbyBlocks = [];
+               if (spawn.presets != null) {
+                  foreach (var presetID in spawn.presets) {
+                     if (!SpawnConversion.presetDefinitions.TryGetValue(presetID, out var preset))
+                        continue;
+                     if (preset.condition?.neededNearbyBlocks != null) {
+                        var resolvedBlocks = preset.condition.neededNearbyBlocks.SelectMany(x => JavaData.resolveBlock(x)).ToArray();
+                        neededNearbyBlocks.Add(resolvedBlocks);
+                     }
+                     if (preset.antiCondition?.neededNearbyBlocks != null) {
+                        var resolvedBlocks = preset.antiCondition.neededNearbyBlocks.SelectMany(x => JavaData.resolveBlock(x)).ToArray();
+                        preventedNearbyBlocks.Add(resolvedBlocks);
+                     }
+                  }
+               }
+               var neededNearBlocks = spawn.condition?.neededNearbyBlocks?.SelectMany(x => JavaData.resolveBlock(x)).ToArray();
+               if (neededNearBlocks != null && neededNearBlocks.Length > 0)
+                  neededNearbyBlocks.Add(neededNearBlocks);
+               var preventedNearBlocks = spawn.anticondition?.neededNearbyBlocks?.SelectMany(x => JavaData.resolveBlock(x)).ToArray();
+               if (preventedNearBlocks != null && preventedNearBlocks.Length > 0)
+                  neededNearbyBlocks.Add(preventedNearBlocks);
+               if (neededNearbyBlocks.Count < 1)
+                  neededNearbyBlocks = null;
+               if (preventedNearbyBlocks.Count < 1)
+                  preventedNearbyBlocks = null;
+
+               var newScriptedCondition = new ScriptedConditions(
+                  minMaxArray[0],
+                  minMaxArray[1],
+                  spawnCondition.isRaining,
+                  spawnCondition.isThundering,
+                  spawnCondition.timeRange,
+                  neededNearbyBlocks?.ToArray(),
+                  preventedNearbyBlocks?.ToArray()
+               );
                spawnConditionsMap[i.ToString()] = newScriptedCondition;
                if (spawn.weightMultiplier != null && spawn.weightMultiplier.multiplier != 0) {
                   var multipliedCondition = spawn.weightMultiplier.condition;
+                  var multipliedNeededBlocks = spawn.weightMultiplier.condition.neededNearbyBlocks?.SelectMany(x => JavaData.resolveBlock(x)).ToArray();
                   //If being applied as an anticondition
                   if (spawn.weightMultiplier.multiplier < 1) {
                      spawnConditionsMap[i.ToString() + 'm'] = newScriptedCondition;
+                     var preventedBlocks =
+                        (multipliedNeededBlocks != null && preventedNearbyBlocks != null)
+                        ? [multipliedNeededBlocks, .. preventedNearbyBlocks]
+                        : ((multipliedNeededBlocks != null) ? [multipliedNeededBlocks] : preventedNearbyBlocks?.ToArray());
                      spawnConditionsMap[i.ToString()] = new ScriptedConditions(
                         minMaxArray[0],
                         minMaxArray[1],
                         (multipliedCondition.isRaining != null) ? !multipliedCondition.isRaining : spawnCondition.isRaining,
                         (multipliedCondition.isThundering != null) ? !multipliedCondition.isThundering : spawnCondition.isThundering,
-                        InvertTimeRange(multipliedCondition.timeRange) ?? spawnCondition.timeRange
+                        InvertTimeRange(multipliedCondition.timeRange) ?? spawnCondition.timeRange,
+                        neededNearbyBlocks?.ToArray(),
+                        preventedBlocks
                      );
                   }
                   else {
+                     var nearbyBlocks =
+                        (multipliedNeededBlocks != null && neededNearbyBlocks != null)
+                        ? [multipliedNeededBlocks, .. neededNearbyBlocks]
+                        : ((multipliedNeededBlocks != null) ? [multipliedNeededBlocks] : neededNearbyBlocks?.ToArray());
                      spawnConditionsMap[i.ToString() + 'm'] = new ScriptedConditions(
                         minMaxArray[0],
                         minMaxArray[1],
                         multipliedCondition.isRaining ?? spawnCondition.isRaining,
                         multipliedCondition.isThundering ?? spawnCondition.isThundering,
-                        multipliedCondition.timeRange ?? spawnCondition.timeRange
+                        multipliedCondition.timeRange ?? spawnCondition.timeRange,
+                        nearbyBlocks,
+                        preventedNearbyBlocks?.ToArray()
                      );
                   }
                }
@@ -92,13 +144,17 @@ namespace CobbleBuild.BedrockClasses {
          public string? timeRange;
          public int minLevel;
          public int maxLevel;
+         public string[][]? neededNearbyBlocks;
+         public string[][]? preventedNearbyBlocks;
          /// <param name="timeRange">The same timerange format that exists in the cobblemon spawn condition</param>
-         public ScriptedConditions(int minLevel, int maxLevel, bool? isRaining, bool? isThundering, string? timeRange) {
+         public ScriptedConditions(int minLevel, int maxLevel, bool? isRaining, bool? isThundering, string? timeRange, string[][]? neededNearbyBlocks, string[][]? preventedNearbyBlocks) {
             this.minLevel = minLevel;
             this.maxLevel = maxLevel;
             this.isRaining = isRaining;
             this.isThundering = isThundering;
             this.timeRange = timeRange;
+            this.preventedNearbyBlocks = preventedNearbyBlocks;
+            this.neededNearbyBlocks = neededNearbyBlocks;
          }
       }
    }

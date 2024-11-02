@@ -210,12 +210,11 @@ namespace CobbleBuild.ConversionTechnology {
                   }
                }
             }
-
             //Handle conditions
             if (spawnClass.condition != null)
-               newCondition.ApplyCondition(spawnClass.condition, true);
+               newCondition.ApplyCondition(spawnClass.condition);
             if (spawnClass.anticondition != null)
-               newCondition.ApplyAnticondition(spawnClass.anticondition, true);
+               newCondition.ApplyAnticondition(spawnClass.anticondition);
 
             //If these lists are initialized but empty, then they are probably intended for modded blocks and the condition should be disabled
             if (newCondition.valid_spawn_blocks != null && newCondition.valid_spawn_blocks.Count < 1)
@@ -241,7 +240,7 @@ namespace CobbleBuild.ConversionTechnology {
                //If the multiplier is increasing the odds
                if (spawnClass.weightMultiplier.multiplier > 1) {
                   multipliedCondition.weight = new SpawnRules.SpawnWeight((spawnClass.weightMultiplier.multiplier - 1) * newCondition.weight.@default);
-                  multipliedCondition.ApplyCondition(spawnClass.weightMultiplier.condition, true);
+                  multipliedCondition.ApplyCondition(spawnClass.weightMultiplier.condition);
                }
                //If the multiplier decreases the odds on that condition
                else {
@@ -249,7 +248,7 @@ namespace CobbleBuild.ConversionTechnology {
                   var multiplierWeight = currentWeight * spawnClass.weightMultiplier.multiplier;
                   multipliedCondition.weight = new SpawnRules.SpawnWeight(multiplierWeight);
                   newCondition.weight = new SpawnRules.SpawnWeight(currentWeight - multiplierWeight);
-                  newCondition.ApplyAnticondition(spawnClass.weightMultiplier.condition, true);
+                  newCondition.ApplyAnticondition(spawnClass.weightMultiplier.condition);
                }
                multipliedCondition.permute_types = [new SpawnRules.ConditionClass.PermuteType(100, identifier, $"cobblemon:spawn_condition_{i}m")];
                conditions.Add(multipliedCondition);

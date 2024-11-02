@@ -94,9 +94,8 @@ namespace CobbleBuild.BedrockClasses {
          /// <summary>
          /// Applies a cobblemon spawn condition to this bedrock condition
          /// </summary>
-         /// <param name="definite">Whether or not this is combining with the other condition or applying on top. (if blocks need to be added to the list or use an .Intersect())</param>
          /// <param name="antiCondition">Whether or not this condition will behave like an anticondition</param>
-         public void ApplyCondition(CobblemonSpawnCondition condition, bool definite = false, bool antiCondition = false) {
+         public void ApplyCondition(CobblemonSpawnCondition condition, bool antiCondition = false) {
             //Filtering by Biome
             if (condition.biomes != null) {
                List<Filter> any_of_filter = new List<Filter>();
@@ -127,19 +126,19 @@ namespace CobbleBuild.BedrockClasses {
                   this.biome_filter.Add(antiCondition ? new Filter { none_of = any_of_filter } : new Filter { any_of = any_of_filter });
                }
                //If the filter is blank, the condition is probably only meant for modded biomes or something and should be disabled.
-               else if (antiCondition == false) {
+               else if (!antiCondition) {
                   this.weight = new SpawnWeight(0);
                }
             }
 
             //Block Filtering
-            //Only overwrite if not an anticondition
-            if (condition.neededNearbyBlocks != null) {
-               this.addBlocksToListIfValid(condition.neededNearbyBlocks, ref (antiCondition ? ref this.prevented_blocks : ref this.valid_spawn_blocks), definite && !antiCondition);
-            }
+            //Now emulated in javascript
+            //if (condition.neededNearbyBlocks != null) {
+            //   this.addBlocksToListIfValid(condition.neededNearbyBlocks, ref (antiCondition ? ref this.prevented_blocks : ref this.valid_spawn_blocks), definite && !antiCondition);
+            //}
 
             if (condition.neededBaseBlocks != null) {
-               this.addBlocksToListIfValid(condition.neededBaseBlocks, ref (antiCondition ? ref this.prevented_blocks : ref this.valid_spawn_blocks), definite && !antiCondition);
+               this.addBlocksToListIfValid(condition.neededBaseBlocks, ref (antiCondition ? ref this.prevented_blocks : ref this.valid_spawn_blocks));
             }
 
             //Height
@@ -174,11 +173,11 @@ namespace CobbleBuild.BedrockClasses {
             }
          }
 
-         public void ApplyAnticondition(CobblemonSpawnCondition condition, bool definite = false) {
-            this.ApplyCondition(condition, definite, true);
+         public void ApplyAnticondition(CobblemonSpawnCondition condition) {
+            this.ApplyCondition(condition, true);
          }
          /// <param name="overwrite">Overwrites the list entirely</param>
-         private void addBlocksToListIfValid(string[] blockIds, ref List<string>? listToApplyTo, bool overwrite) {
+         private void addBlocksToListIfValid(string[] blockIds, ref List<string>? listToApplyTo) {
             bool preexistingList = listToApplyTo != null;
             var newList = new List<string>();
             foreach (string block in blockIds) { //Refrences to other block sets are ignored for now
@@ -192,7 +191,7 @@ namespace CobbleBuild.BedrockClasses {
                newList = newList.Union(item).ToList();
             }
             //If multiple requirements, 
-            listToApplyTo = (preexistingList && !overwrite) ? listToApplyTo!.Union(newList).ToList() : newList;
+            listToApplyTo = (preexistingList) ? listToApplyTo!.Intersect(newList).ToList() : newList;
          }
       }
 
