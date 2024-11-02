@@ -74,8 +74,6 @@ namespace CobbleBuild.DataCreator {
                   else {
                      renderController = outputJSON.render_controllers[layerControllerName];
                   }
-                  renderController.part_visibility = output.part_visibility;
-                  renderController.materials = [new StringOrPropertyAndString("*", "material." + layer.getProperMaterial())];
                   //The previous variation not having any layer data is a valid edge case that I need to address (TODO later)
 
                   //If the render controller for previous layer in the previous variation are not compatible with this layer variation
@@ -86,12 +84,15 @@ namespace CobbleBuild.DataCreator {
                      foreach (var array in renderController.arrays.textures) {
                         renderController.arrays.textures[array.Key].FillUpTo(variationArray.Count, "texture.blank");
                      }
-                     outputJSON.render_controllers[newControllerName] = renderController;
+                     outputJSON.render_controllers[newControllerName] = renderController.Clone();
                      entity.client_entity.description.render_controllers.Add(newControllerName);
 
                      var newRenderController = getNewLayerRenderController(output);
                      renderController = newRenderController;
                   }
+
+                  renderController.part_visibility = output.part_visibility;
+                  renderController.materials = [new StringOrPropertyAndString("*", "material." + layer.getProperMaterial())];
 
                   string arrayName = $"array.variation_{layer.name}";
                   if (layer.texture.texture == null) //If layer is animated
@@ -100,7 +101,7 @@ namespace CobbleBuild.DataCreator {
                      string uvPartial = "textures/pokemon/" + pokemon.folder_name + $"/{variation.variantName}_{layer.name}_uv";
                      entity.client_entity.description.textures.TryAdd($"{variation.variantName}_{layer.name}_uv", uvPartial);
                      if (!renderController.arrays.textures.ContainsKey(arrayName)) {
-                        renderController.arrays.textures.Add(arrayName, (new List<string>()).FillUpTo(i, "texture.blank")); ;
+                        renderController.arrays.textures.Add(arrayName, (new List<string>()).FillUpTo(i, "texture.blank"));
                         //renderController.textures.Add($"{arrayName}[query.variant - {pokemon.Variations.Values.ToList().IndexOf(v)}]");
                         renderController.textures.Add($"{arrayName}[query.variant]");
                      }

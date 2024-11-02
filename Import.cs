@@ -112,6 +112,8 @@ namespace CobbleBuild {
          await File.WriteAllTextAsync(outputPath, templateData);
       }
 
+      private static readonly byte defaultAlphaValue = 110;
+      //This system of having 1 static alpha value needs to be improved
       public static async Task ImportTexturesInLayersAsUV(List<ResolverVariation.Layer> layers, string variationName, Pokemon pokemon) {
          foreach (ResolverVariation.Layer layer in layers) {
             if (layer.texture.texture != null) {
@@ -121,7 +123,7 @@ namespace CobbleBuild {
                await ImportTexture(texturePartialPath.Remove(texturePartialPath.Length - 4), importPath, outputPath, TextureType.Entity);
                //Overwrite the file with the new data
                if (layer.emissive == true) {
-                  var newTexture = ImageProcessor.setAlphaValue(SkiaSharp.SKBitmap.Decode(importPath), 80);
+                  var newTexture = ImageProcessor.setAlphaValue(SkiaSharp.SKBitmap.Decode(importPath), defaultAlphaValue);
                   var encoding = newTexture.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
                   using (var fileStream = File.OpenWrite(outputPath))
                      encoding.SaveTo(fileStream);
@@ -136,7 +138,7 @@ namespace CobbleBuild {
                }
                var uv = ImageProcessor.CreateVerticalUV([.. files]);
                if (layer.emissive == true)
-                  uv = ImageProcessor.setAlphaValue(uv, 80);
+                  uv = ImageProcessor.setAlphaValue(uv, defaultAlphaValue);
                string uvPartialPath = Path.Combine("textures/pokemon", pokemon.folder_name, $"{variationName}_{layer.name}_uv").Replace("\\", "/");
                Program.EntityTextures.Add(uvPartialPath);
                var finalFilePath = Path.Combine(Config.config.resourcePath, uvPartialPath + ".png");

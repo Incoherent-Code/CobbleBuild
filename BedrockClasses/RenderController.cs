@@ -1,4 +1,6 @@
-﻿namespace CobbleBuild.BedrockClasses {
+﻿using Newtonsoft.Json;
+
+namespace CobbleBuild.BedrockClasses {
    public class RenderControllerJson {
       public string format_version = "1.20.0";
       public Dictionary<string, RenderController> render_controllers;
@@ -21,6 +23,9 @@
       public Color? on_fire_color;
       public Color? overlay_color;
       public UVAniationField? uv_anim;
+      public RenderController Clone() {
+         return JsonConvert.DeserializeObject<RenderController>(JsonConvert.SerializeObject(this))!;
+      }
       public RenderController() { }
       public class ArraysField {
          public Dictionary<string, List<string>>? materials;
