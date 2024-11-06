@@ -130,7 +130,7 @@ namespace CobbleBuild.BedrockClasses {
             case "night":
                return "day";
             default:
-               Misc.warn($"Could not invert time range '${timeRange}'");
+               Misc.warn($"Could not invert time range '${timeRange}'. The invert is not known by CobbleBuild");
                return null;
          }
       }

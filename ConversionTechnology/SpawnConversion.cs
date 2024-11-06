@@ -146,21 +146,12 @@ namespace CobbleBuild.ConversionTechnology {
          string identifier = "cobblemon:" + json.spawns[0].pokemon.ToLower().Replace(" ", "_");
          List<SpawnRules.ConditionClass> conditions = new List<SpawnRules.ConditionClass>();
          for (int i = 0; i < json.spawns.Length; i++) {
-            //if (identifier == "cobblemon:murkrow") {
-            //   Debugger.Break();
-            //}
             SpawnRules.ConditionClass newCondition = new SpawnRules.ConditionClass();
             var spawnClass = json.spawns[i];
 
             //Initialize Stuff
             //newCondition.valid_spawn_blocks = new List<string>();
             //newCondition.prevented_blocks = new List<string>();
-
-            //Warnings about time ranges not currently handled in the typescript base
-            if (spawnClass.condition?.timeRange != null && !knownTimeRanges.Contains(spawnClass.condition.timeRange))
-               Misc.warn($"Unknown time range {spawnClass.condition.timeRange}");
-            if (spawnClass.anticondition?.timeRange != null && !knownTimeRanges.Contains(spawnClass.anticondition.timeRange))
-               Misc.warn($"Unknown time range {spawnClass.anticondition.timeRange}");
 
             //Spawn Weight
             newCondition.weight = new SpawnRules.SpawnWeight(spawnClass.weight * (bucketMultipliers[spawnClass.bucket]));
