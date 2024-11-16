@@ -264,6 +264,7 @@ namespace CobbleBuild {
             Console.WriteLine("Importing Other Resources...");
             await Import.ImportAllTexturesFromFolder(Path.Combine(config.resourcesPath, "assets/cobblemon/textures/block"), Path.Combine(config.resourcePath, "textures/block"), Import.TextureType.Block);
             await Import.ImportAllTexturesFromFolder(Path.Combine(config.resourcesPath, "assets/cobblemon/textures/item"), Path.Combine(config.resourcePath, "textures/item"), Import.TextureType.Item);
+            await Import.ImportAllTexturesFromFolder(Path.Combine(config.resourcesPath, "assets/cobblemon/textures/particle"), Path.Combine(config.resourcePath, "textures/particles"), Import.TextureType.Entity);
             await Import.ImportAllRecipesInFolder(Path.Combine(config.resourcesPath, "data/cobblemon/recipes"), Path.Combine(config.behaviorPath, "recipes"));
             //Unfortunately, model conversion is just too rough to automate
             //Import.ImportAllRegisteredJavaModels();

@@ -153,7 +153,7 @@ namespace CobbleBuild {
             if (!file.EndsWith(".png"))
                continue;
             string internalLocation = Misc.getInternalLocation(file);
-            tasks.Add(ImportTexture(internalLocation, file, Path.Combine(OutputPath, Misc.getPathFrom(file, OutputPath.Replace("\\", "/").Split("/").Last(), false)), type));
+            tasks.Add(ImportTexture(internalLocation, file, Path.Combine(OutputPath, Misc.getPathFrom(file, ImportPath.Replace("\\", "/").Split("/").Last(), false)), type));
          }
          await Task.WhenAll(tasks);
       }
