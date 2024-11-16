@@ -259,8 +259,14 @@ namespace CobbleBuild.DataCreator {
          //Feature implimentations
          if (pokemon.data.features.Contains("sheared")) {
             output.description.properties.Add("cobblemon:has_been_sheared", Property.makeBool(false, true));
-            output.events.Add("cobblemon:eat_grass", new Event() { set_property = new Dictionary<string, object>() { { "cobblemon:has_been_sheared", false } } });
-            output.events.Add("cobblemon:shear", new Event() { set_property = new Dictionary<string, object>() { { "cobblemon:has_been_sheared", true } } });
+            output.events.Add("cobblemon:eat_grass", new Event() {
+               set_property = new Dictionary<string, object>() { { "cobblemon:has_been_sheared", false } },
+               queue_command = new Event.CommandClass("scriptevent cobblemon:update_self")
+            });
+            output.events.Add("cobblemon:shear", new Event() {
+               set_property = new Dictionary<string, object>() { { "cobblemon:has_been_sheared", true } },
+               queue_command = new Event.CommandClass("scriptevent cobblemon:update_self")
+            });
             output.components.behavior_eatBlock = new Component.Behavior.eatBlock(2, [("grass_block", "dirt"), ("grass", "dirt"), ("tallgrass", "air")], "cobblemon:eat_grass");
             output.components.interact.interactions.Insert(0, Component.Interact.getSheepInteraction("cobblemon:shear"));
          }
