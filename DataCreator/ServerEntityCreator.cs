@@ -17,7 +17,7 @@ namespace CobbleBuild.DataCreator {
 
          //Setting all of the default components
          output.components = new Components() {
-            physics = new Component(),
+            physics = new Component.Physics(),
             pushable = new Component.Pushable(),
             movement_generic = new Component.Movement.Basic(),
             jumpStatic = new Component.JumpStatic(),
@@ -308,10 +308,10 @@ namespace CobbleBuild.DataCreator {
          output.description = new Description(pokeball.pokeball) {
             is_spawnable = false,
             properties = new Dictionary<string, Property>()
-             {
-                    {"cobblemon:can_catch_pokemon", Property.makeBool(true, true) },
-                    {"cobblemon:disabled", Property.makeBool(false, true)}
-                }
+            {
+               {"cobblemon:can_catch_pokemon", Property.makeBool(true, true) },
+               {"cobblemon:gravity_enabled", Property.makeBool(true, true) }
+            }
          };
          output.events = new Dictionary<string, Event>()
          {
@@ -324,7 +324,7 @@ namespace CobbleBuild.DataCreator {
                 //        ]
                 //}] } },
                 {"minecraft:entity_spawned", new Event() { trigger = "cobblemon:thrown" } }
-            };
+         };
 
          //Instantly kill any cobblemon entity
          output.component_groups.Add("cobblemon:instant_kill", new Components() {
@@ -332,29 +332,30 @@ namespace CobbleBuild.DataCreator {
          });
          output.events.Add("cobblemon:instant_kill", new Event() { add = new Event.AddClass(["cobblemon:instant_kill"]) });
 
-         output.component_groups.Add("cobblemon:enabled", new Components() {
-            physics = new Component(),
-            pushable = new Component.Pushable()
+         output.component_groups.Add("cobbmeon:enable_gravity", new Components() {
+            physics = new Component.Physics()
          });
-         output.component_groups.Add("cobblemon:disabled", new Components() {
-            customHitTest = new Component.CustomHitTest(0, 0, new Vector3(0, 0, 0))
-         });
-         output.events.Add("cobblemon:disable", new Event() {
-            sequence = new List<Event.SequenceObject>() {
-                new Event.SequenceObject() { remove = new Event.RemoveClass(["cobblemon:enabled"]) },
-                new Event.SequenceObject() { add = new Event.AddClass(["cobblemon:disabled"]) },
-                new Event.SequenceObject() { set_property = new Dictionary<string, object>() {{"cobblemon:disabled", true}}}
-            }
+         output.events.Add("cobblemon:enable_gravity", new Event() {
+            add = new Event.AddClass(["cobblemon:enable_gravity"]),
+            set_property = new Dictionary<string, object>() { { "cobblemon:gravity_enabled", true } }
          });
 
+         output.component_groups.Add("cobbmeon:disable_gravity", new Components() {
+            physics = new Component.Physics(false, true, false)
+         });
+         output.events.Add("cobblemon:disable_gravity", new Event() {
+            add = new Event.AddClass(["cobblemon:disable_gravity"]),
+            set_property = new Dictionary<string, object>() { { "cobblemon:gravity_enabled", false } }
+         });
 
          output.components = new Components() {
-            physics = new Component(),
-            pushable = new Component.Pushable(),
+            physics = new Component.Physics(),
+            //pushable = new Component.Pushable(),
             collisionBox = new widthAndHeight(0.25f, 0.25f),
             health = new Component.Health(1, 1),
             damageSensor = Component.DamageSensor.getImmuneToFallDamage(),
-            family = new Component.Family("cobblemon", "pokeball")
+            family = new Component.Family("cobblemon", "pokeball"),
+            customHitTest = new Component.CustomHitTest(0, 0, new Vector3(0, 100, 0))
          };
          Component.Projectile projectile = new Component.Projectile() {
             stop_on_hurt = true,

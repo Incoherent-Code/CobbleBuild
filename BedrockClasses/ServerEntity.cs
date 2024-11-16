@@ -78,7 +78,7 @@ namespace CobbleBuild.BedrockClasses {
          [JsonProperty("minecraft:permute_type")]
          public Component.PermuteType? permuteType;
          [JsonProperty("minecraft:physics")]
-         public Component? physics;
+         public Component.Physics? physics;
          [JsonProperty("minecraft:projectile")]
          public Component.Projectile? projectile;
          [JsonProperty("minecraft:pushable")]
@@ -272,11 +272,11 @@ namespace CobbleBuild.BedrockClasses {
          public class CommandClass {
             public objectOrObjectArray command { get; set; }
             public string target { get; set; }
-            public CommandClass(string Command, string Target) {
+            public CommandClass(string Command, string Target = "self") {
                command = new objectOrObjectArray(Command);
                target = Target;
             }
-            public CommandClass(string[] commands, string Target) {
+            public CommandClass(string[] commands, string Target = "self") {
                command = new objectOrObjectArray(commands);
                target = Target;
             }
@@ -380,6 +380,17 @@ namespace CobbleBuild.BedrockClasses {
             public bool? is_pushable { get; set; }
             public bool? is_pushable_by_piston { get; set; }
             public Pushable() { }
+         }
+         /// <summary>
+         /// Adds physics to the entity
+         /// </summary>
+         /// <param name="hasGravity">Whether or not physics is applied to the entity. default: true</param>
+         /// <param name="hasCollision">Whether or not the entity has collision. default: true</param>
+         /// <param name="pushOutOfBlocks">Whether or not the entity gets pushed out of blocks. default: true</param>
+         public class Physics(bool? hasGravity = null, bool? hasCollision = null, bool? pushOutOfBlocks = null) : Component {
+            public bool? has_gravity = hasGravity;
+            public bool? has_collision = hasCollision;
+            public bool? push_towards_closest_space = pushOutOfBlocks;
          }
          /// <summary>
          /// Usable for all types of navigation component (navigation.generic, navigation.fly, etc.)
