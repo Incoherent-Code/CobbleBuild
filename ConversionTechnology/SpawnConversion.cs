@@ -44,6 +44,11 @@ namespace CobbleBuild.ConversionTechnology {
             {"desert", new string[] {"desert"}},
             {"dripstone_caves", new string[] {"dripstone_caves"}},
             {"edge", new string[] {"edge"}},
+            //Bedrock Edition does not differentiate these
+            {"end_barrens", ["the_end"] },
+            {"end_highlands", ["the_end"] },
+            {"end_midlands", ["the_end"] },
+
             {"extreme_hills", new string[] {"extreme_hills"}},
             {"flower_forest", new string[] {"flower_forest"}},
             {"forest", new string[] {"forest"}},
@@ -109,6 +114,7 @@ namespace CobbleBuild.ConversionTechnology {
             {"stony_peaks", new string[] {"mountains"}}, //Not included in stone tag !?!?!?!?
             {"stony_shore", new string[] {"stone","beach"}},
             {"sunflower_plains", new string[] {"plains", "mutated"}},
+            {"small_end_islands", ["the_end"] },
             {"swamp", new string[] {"swamp"}},
             {"taiga", new string[] {"taiga"}},
             {"the_end", new string[] {"the_end"}},

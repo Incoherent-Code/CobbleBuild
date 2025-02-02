@@ -134,7 +134,7 @@ namespace CobbleBuild {
             var blankConfig = Config.getDefault();
             blankConfig.overwriteConfig();
             Environment.Exit(0);
-            throw new Exception("Envoirnment Terminating"); //Make the compiler happy
+            return blankConfig;
          }
          else { //Continue with blank config if they do not choose to make one.
             return Config.getDefault();
